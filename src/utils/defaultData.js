@@ -92,6 +92,26 @@ export const defaultEdges = [
   },
 ];
 
+export const blankNodes = [
+  {
+    id: '0',
+    type: 'sceneNode',
+    position: { x: 250, y: 200 },
+    data: {
+      numericId: 0,
+      image: '',
+      title: '',
+      text: '',
+      imagesize: '',
+      choices: [],
+      isEnding: false,
+      isGoodEnding: false,
+    },
+  },
+];
+
+export const blankEdges = [];
+
 export function getInitialNextId(nodes) {
   return nodes.reduce((max, n) => Math.max(max, parseInt(n.id, 10)), -1) + 1;
 }

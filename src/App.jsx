@@ -15,7 +15,7 @@ import EditPanel from './components/EditPanel';
 import Toolbar from './components/Toolbar';
 import ExportModal from './components/ExportModal';
 import ImportWikitextModal from './components/ImportWikitextModal';
-import { defaultNodes, defaultEdges, getInitialNextId } from './utils/defaultData';
+import { defaultNodes, defaultEdges, blankNodes, blankEdges, getInitialNextId } from './utils/defaultData';
 import { exportWikitext } from './utils/wikitextExporter';
 import { runAutoLayout } from './utils/autoLayout';
 
@@ -165,10 +165,10 @@ export default function App() {
 
   const handleNew = useCallback(() => {
     if (!window.confirm('Start a new project? Any unsaved changes will be lost.')) return;
-    setNodes(defaultNodes);
-    setEdges(defaultEdges);
+    setNodes(structuredClone(blankNodes));
+    setEdges(structuredClone(blankEdges));
     setSelectedNodeId(null);
-    nextIdRef.current = getInitialNextId(defaultNodes);
+    nextIdRef.current = getInitialNextId(blankNodes);
     setFilename('adventure');
     isDirtyRef.current = false;
   }, [setNodes, setEdges]);
