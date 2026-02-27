@@ -163,6 +163,16 @@ export default function App() {
     setSelectedNodeId(null);
   }, [setNodes, setEdges]);
 
+  const handleNew = useCallback(() => {
+    if (!window.confirm('Start a new project? Any unsaved changes will be lost.')) return;
+    setNodes(defaultNodes);
+    setEdges(defaultEdges);
+    setSelectedNodeId(null);
+    nextIdRef.current = getInitialNextId(defaultNodes);
+    setFilename('adventure');
+    isDirtyRef.current = false;
+  }, [setNodes, setEdges]);
+
   const handleAutoLayout = useCallback(() => {
     isDirtyRef.current = true;
     setNodes(nds => runAutoLayout(nds, edges));
@@ -209,6 +219,7 @@ export default function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
       <Toolbar
+        onNew={handleNew}
         onAddNode={handleAddNode}
         onAutoLayout={handleAutoLayout}
         onExport={handleExport}

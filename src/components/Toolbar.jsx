@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Save, FolderOpen, Settings, Sun, Moon } from 'lucide-react';
 
-export default function Toolbar({ onAddNode, onAutoLayout, onExport, onSaveJSON, onLoadJSON, onImportWikitext, theme, onSetTheme, filename, onFilenameChange }) {
+export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSaveJSON, onLoadJSON, onImportWikitext, theme, onSetTheme, filename, onFilenameChange }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef(null);
 
@@ -52,6 +52,7 @@ export default function Toolbar({ onAddNode, onAutoLayout, onExport, onSaveJSON,
 
       <div className="toolbar-divider" />
 
+      <button onClick={onNew}>New</button>
       <button onClick={onAddNode}>+ Add Node</button>
       <button onClick={onAutoLayout}>Auto Layout</button>
 
