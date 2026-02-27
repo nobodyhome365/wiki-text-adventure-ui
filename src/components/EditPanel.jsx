@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export default function EditPanel({
   selectedNode,
   onUpdateNode,
@@ -5,7 +7,12 @@ export default function EditPanel({
   onAddChoice,
   onDeleteNode,
   onClose,
+  panelWidth,
+  onPanelResize,
 }) {
+  const [sceneModalOpen, setSceneModalOpen] = useState(false);
+  const [draftText, setDraftText] = useState('');
+
   if (!selectedNode) return null;
 
   const { id, data } = selectedNode;
@@ -20,10 +27,25 @@ export default function EditPanel({
     patch('choices', newChoices);
   };
 
+  const handleResizeMouseDown = (e) => {
+    const startX = e.clientX;
+    const startWidth = panelWidth;
+    const onMove = (mv) => {
+      const delta = startX - mv.clientX;
+      onPanelResize(Math.min(700, Math.max(300, startWidth + delta)));
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  };
+
   return (
     <div
       style={{
-        width: 300,
+        width: panelWidth,
         height: '100%',
         backgroundColor: '#161616',
         borderLeft: '1px solid #2e2e2e',
@@ -34,8 +56,12 @@ export default function EditPanel({
         display: 'flex',
         flexDirection: 'column',
         gap: 0,
+        position: 'relative',
       }}
     >
+      {/* Drag handle */}
+      <div className="resize-handle" onMouseDown={handleResizeMouseDown} />
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <span style={{ fontWeight: 'bold', fontSize: 14 }}>Scene #{numericId}</span>
         <button onClick={onClose} style={{ padding: '2px 8px', fontSize: 12 }}>✕</button>
@@ -75,7 +101,16 @@ export default function EditPanel({
         placeholder="e.g. 300px"
       />
 
-      <label>Scene text</label>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, marginBottom: 3 }}>
+        <label style={{ margin: 0 }}>Scene text</label>
+        <button
+          title="Edit in fullscreen"
+          onClick={() => { setDraftText(text || ''); setSceneModalOpen(true); }}
+          style={{ padding: '1px 6px', fontSize: 11 }}
+        >
+          ↗
+        </button>
+      </div>
       <textarea
         className="nodrag nopan"
         value={text}
@@ -177,6 +212,35 @@ export default function EditPanel({
       <div style={{ marginTop: 8, fontSize: 10, color: '#555', lineHeight: 1.5 }}>
         Drag a choice handle (right side of node) to another node to connect it.
       </div>
+
+      {/* Fullscreen scene text modal */}
+      {sceneModalOpen && (
+        <div className="scene-modal-overlay">
+          <div className="scene-modal">
+            <div className="scene-modal-header">
+              <span style={{ fontWeight: 'bold', fontSize: 14 }}>
+                Scene Text — {title || `#${numericId}`}
+              </span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => { patch('text', draftText); setSceneModalOpen(false); }}
+                  style={{ borderColor: '#27ae60', color: '#27ae60' }}
+                >
+                  Save
+                </button>
+                <button onClick={() => setSceneModalOpen(false)}>Cancel</button>
+              </div>
+            </div>
+            <textarea
+              className="scene-modal-textarea nodrag nopan"
+              value={draftText}
+              onChange={e => setDraftText(e.target.value)}
+              placeholder="Write your scene text..."
+              autoFocus
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

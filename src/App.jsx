@@ -26,6 +26,7 @@ export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [panelWidth, setPanelWidth] = useState(300);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [wikitextContent, setWikitextContent] = useState('');
   const [importWikitextOpen, setImportWikitextOpen] = useState(false);
@@ -203,6 +204,8 @@ export default function App() {
             onAddChoice={handleAddChoice}
             onDeleteNode={handleDeleteNode}
             onClose={() => setSelectedNodeId(null)}
+            panelWidth={panelWidth}
+            onPanelResize={setPanelWidth}
           />
         )}
       </div>
