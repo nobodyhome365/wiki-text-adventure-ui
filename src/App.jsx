@@ -18,6 +18,7 @@ import ImportWikitextModal from './components/ImportWikitextModal';
 import { defaultNodes, defaultEdges, blankNodes, blankEdges, getInitialNextId } from './utils/defaultData';
 import { exportWikitext } from './utils/wikitextExporter';
 import { runAutoLayout } from './utils/autoLayout';
+import { NodeActionsContext } from './contexts/NodeActionsContext';
 
 // Must be defined outside the component to avoid re-creating on every render
 const nodeTypes = { sceneNode: SceneNode };
@@ -30,6 +31,7 @@ export default function App() {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [panelWidth, setPanelWidth] = useState(300);
   const isDirtyRef = useRef(false);
+  const lastSavedFilenameRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -171,7 +173,22 @@ export default function App() {
     nextIdRef.current = getInitialNextId(blankNodes);
     setFilename('adventure');
     isDirtyRef.current = false;
+    lastSavedFilenameRef.current = null;
   }, [setNodes, setEdges]);
+
+  const handleDuplicateNode = useCallback((nodeId) => {
+    const source = nodes.find(n => n.id === nodeId);
+    if (!source) return;
+    isDirtyRef.current = true;
+    const newId = String(nextIdRef.current++);
+    setNodes(nds => [...nds, {
+      ...source,
+      id: newId,
+      selected: false,
+      position: { x: source.position.x + 40, y: source.position.y + 40 },
+      data: { ...source.data, numericId: parseInt(newId, 10) },
+    }]);
+  }, [nodes, setNodes]);
 
   const handleAutoLayout = useCallback(() => {
     isDirtyRef.current = true;
@@ -184,6 +201,9 @@ export default function App() {
   }, [nodes, edges]);
 
   const handleSaveJSON = useCallback(() => {
+    if (lastSavedFilenameRef.current === filename) {
+      if (!window.confirm(`Overwrite ${filename}.json?`)) return;
+    }
     const blob = new Blob([JSON.stringify({ nodes, edges }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -192,6 +212,7 @@ export default function App() {
     a.click();
     URL.revokeObjectURL(url);
     isDirtyRef.current = false;
+    lastSavedFilenameRef.current = filename;
   }, [nodes, edges, filename]);
 
   const handleLoadWikitext = useCallback(({ nodes: newNodes, edges: newEdges }) => {
@@ -212,7 +233,10 @@ export default function App() {
     setEdges(parsed.edges);
     setSelectedNodeId(null);
     nextIdRef.current = getInitialNextId(parsed.nodes);
-    if (loadedFilename) setFilename(loadedFilename);
+    if (loadedFilename) {
+      setFilename(loadedFilename);
+      lastSavedFilenameRef.current = loadedFilename;
+    }
     isDirtyRef.current = false;
   }, [setNodes, setEdges]);
 
@@ -232,6 +256,7 @@ export default function App() {
         onFilenameChange={setFilename}
       />
 
+      <NodeActionsContext.Provider value={{ onDeleteNode: handleDeleteNode, onDuplicateNode: handleDuplicateNode }}>
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <div style={{ flex: 1, position: 'relative' }}>
           <ReactFlow
@@ -268,12 +293,14 @@ export default function App() {
             onDeleteChoice={handleDeleteChoice}
             onAddChoice={handleAddChoice}
             onDeleteNode={handleDeleteNode}
+            onDuplicateNode={handleDuplicateNode}
             onClose={() => setSelectedNodeId(null)}
             panelWidth={panelWidth}
             onPanelResize={setPanelWidth}
           />
         )}
       </div>
+      </NodeActionsContext.Provider>
 
       {exportModalOpen && (
         <ExportModal

@@ -6,6 +6,7 @@ export default function EditPanel({
   onDeleteChoice,
   onAddChoice,
   onDeleteNode,
+  onDuplicateNode,
   onClose,
   panelWidth,
   onPanelResize,
@@ -67,11 +68,18 @@ export default function EditPanel({
         <button className="btn-sm" onClick={onClose}>✕</button>
       </div>
       {numericId !== 0 && (
-        <div style={{ marginBottom: 12 }}>
+        <div style={{ marginBottom: 12, display: 'flex', gap: 6 }}>
+          <button
+            className="btn-sm"
+            onClick={() => onDuplicateNode(id)}
+            style={{ flex: 1 }}
+          >
+            Duplicate
+          </button>
           <button
             className="btn-sm btn-danger"
             onClick={() => onDeleteNode(id)}
-            style={{ width: '100%' }}
+            style={{ flex: 1 }}
           >
             Delete Scene
           </button>
@@ -127,7 +135,14 @@ export default function EditPanel({
           id="isEnding"
           className="nodrag nopan"
           checked={!!isEnding}
-          onChange={e => patch('isEnding', e.target.checked)}
+          onChange={e => {
+            const val = e.target.checked;
+            if (val && !startOverText) {
+              onUpdateNode(id, { ...data, isEnding: val, startOverText: isGoodEnding ? "'''PLAY AGAIN?'''" : "'''START OVER'''" });
+            } else {
+              patch('isEnding', val);
+            }
+          }}
         />
         <label htmlFor="isEnding" className="checkbox-label">
           Ending node
@@ -142,7 +157,16 @@ export default function EditPanel({
               id="isGoodEnding"
               className="nodrag nopan"
               checked={!!isGoodEnding}
-              onChange={e => patch('isGoodEnding', e.target.checked)}
+              onChange={e => {
+                const val = e.target.checked;
+                let newStartOverText = startOverText;
+                if (val && (!startOverText || startOverText === "'''START OVER'''")) {
+                  newStartOverText = "'''PLAY AGAIN?'''";
+                } else if (!val && startOverText === "'''PLAY AGAIN?'''") {
+                  newStartOverText = "'''START OVER'''";
+                }
+                onUpdateNode(id, { ...data, isGoodEnding: val, startOverText: newStartOverText });
+              }}
             />
             <label htmlFor="isGoodEnding" className="checkbox-label">
               Good ending

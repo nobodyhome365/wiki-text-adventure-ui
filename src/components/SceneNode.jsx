@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { Handle, Position, useUpdateNodeInternals } from '@xyflow/react';
+import { NodeActionsContext } from '../contexts/NodeActionsContext';
 
 function getBorderColor(numericId, isEnding, isGoodEnding) {
   if (numericId === 0) return 'gold';
@@ -10,10 +11,24 @@ function getBorderColor(numericId, isEnding, isGoodEnding) {
 
 export default function SceneNode({ id, data, selected }) {
   const updateNodeInternals = useUpdateNodeInternals();
+  const { onDeleteNode, onDuplicateNode } = useContext(NodeActionsContext);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     updateNodeInternals(id);
   }, [id, data.choices.length, updateNodeInternals]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
 
   const { numericId, title, image, text, choices, isEnding, isGoodEnding, startOverText } = data;
   const borderColor = getBorderColor(numericId, isEnding, isGoodEnding);
@@ -41,8 +56,80 @@ export default function SceneNode({ id, data, selected }) {
         style={{ background: 'var(--text-faint)', width: 10, height: 10 }}
       />
 
-      <div style={{ fontWeight: 'bold', marginBottom: 4, color: borderColor, fontSize: 13 }}>
-        #{numericId}{title ? ` — ${title}` : ''}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+        <span style={{ fontWeight: 'bold', color: borderColor, fontSize: 13 }}>
+          #{numericId}{title ? ` — ${title}` : ''}
+        </span>
+
+        {numericId !== 0 && (
+          <div ref={menuRef} style={{ position: 'relative' }} className="nodrag nopan">
+            <button
+              onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-faint)',
+                padding: '0 2px',
+                fontSize: 14,
+                lineHeight: 1,
+                borderRadius: 3,
+              }}
+              title="Node actions"
+            >
+              ⋮
+            </button>
+            {menuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 2px)',
+                  right: 0,
+                  backgroundColor: 'var(--bg-primary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 6,
+                  zIndex: 999,
+                  minWidth: 120,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  overflow: 'hidden',
+                }}
+              >
+                <button
+                  onClick={e => { e.stopPropagation(); onDuplicateNode(id); setMenuOpen(false); }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '7px 12px',
+                    textAlign: 'left',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  Duplicate
+                </button>
+                <button
+                  onClick={e => { e.stopPropagation(); onDeleteNode(id); setMenuOpen(false); }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '7px 12px',
+                    textAlign: 'left',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    color: '#e74c3c',
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {image && (

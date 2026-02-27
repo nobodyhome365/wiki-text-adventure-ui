@@ -52,7 +52,7 @@ export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSa
 
       <div className="toolbar-divider" />
 
-      <button onClick={onNew}>New</button>
+      <button onClick={onNew} style={{ color: '#e74c3c', borderColor: '#e74c3c' }}>New Project</button>
       <button onClick={onAddNode}>+ Add Node</button>
       <button onClick={onAutoLayout}>Auto Layout</button>
 
