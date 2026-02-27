@@ -1,0 +1,42 @@
+.text-adventure {
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    width: 640px;
+    margin: 0 auto;
+    row-gap: 0.25rem;
+}
+.text-adventure #ta-title {
+	font-size: 1.4em;
+	font-weight: bold;
+}
+.text-adventure .tright {
+	margin: 0;
+}
+.text-adventure .thumbinner {
+	padding: 0;
+	border: 0;
+	background-color: transparent;
+}
+.text-adventure .magnify {
+	display: none;
+}
+.text-adventure #ta-body {
+	width: 640px;
+}
+
+@media screen and (max-width: 769px) {
+    .text-adventure {
+        width: 100%;
+    }
+    .text-adventure .thumbinner {
+    	width: auto !important;
+    }
+    .text-adventure #ta-image .thumbinner img {
+    	width: 100%;
+    	height: auto;
+    }
+    .text-adventure #ta-body {
+    	width: 100%;
+    }
+}

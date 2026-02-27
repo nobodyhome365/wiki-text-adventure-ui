@@ -1,0 +1,5 @@
+<templatestyles src="Text adventure choice/styles.css" /><includeonly>
+<div class="offset-button {{{class|}}}">{{#if:{{{link|}}}|[[{{{link}}}|{{{1|{{{link}}}}}}{{{2|&nbsp;&rarr;}}}]]
+|[{{fullurl:{{{page|{{FULLPAGENAME}}}}}|offset={{{1|}}}}}&returnto= {{{2|{{{1}}}}}}{{{3|&nbsp;&rarr;}}}]}}</div></includeonly><noinclude>
+{{Documentation}}<!-- categories and interwikis go on the /doc subpage -->
+</noinclude>

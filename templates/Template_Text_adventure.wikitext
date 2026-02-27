@@ -1,0 +1,10 @@
+<includeonly><templatestyles src="Text adventure/styles.css" />{{#if:{{{1|}}}{{{text|}}}|<!--
+--><div class="text-adventure" style="{{{style|;}}}">
+{{#if:{{{image|}}}|<div id="ta-image">[[File:{{{image}}}|thumb|{{{imagesize|{{{image-size|640px}}}}}}|{{{imagecaption|{{{image-caption|{{{caption|}}}}}}}}}|link=]]</div>}}
+<div id="ta-body" style="{{{bodystyle|;}}}">
+{{#if:{{{title|}}}|<div id="ta-title">{{{title|}}}</div>|}}
+<div id="ta-text" style="{{{textstyle|;}}}">{{{text|{{{1|}}}}}}</div>
+</div>
+</div>|<div style="display:none">{{tl|Text adventure}}{{tl|Text adventure choice}}{{tl|Offset button}}</div>}}</includeonly><noinclude>
+{{Documentation}}<!-- categories and interwikis go on the /doc subpage -->
+</noinclude>

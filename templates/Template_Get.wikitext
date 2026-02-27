@@ -1,0 +1,5 @@
+<includeonly>{{#expr:{{#forumlink:1|+0<={{#expr:10^12}}}}-1}}</includeonly><noinclude>{{Documentation|content=
+Returns the [[mw:Extension:DPLforum#Relative_offsets_and_page_conditions|offset number]] on a page.
+}}
+<!-- [[Category:Your category here]] -->
+</noinclude>

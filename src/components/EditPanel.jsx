@@ -91,7 +91,7 @@ export default function EditPanel({
         className="nodrag nopan"
         value={image}
         onChange={e => patch('image', e.target.value)}
-        placeholder="e.g. Bench snow meri.jpg"
+        placeholder="e.g. Example.jpg"
       />
 
       <label>Image size</label>

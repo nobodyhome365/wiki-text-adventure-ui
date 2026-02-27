@@ -1,0 +1,25 @@
+.offset-button a,
+.offset-button a.external {
+  display: inline-block;
+  width: auto;
+  background-image: none;
+  background-color: #eee;
+  margin: 0.25em 0;
+  padding: 0.8em 0.5em;
+  color: #111;
+  text-decoration: none;
+  transition: 100ms ease-in;
+}
+.offset-button a:hover,
+.offset-button a.external:hover {
+  background-color: #d3d3d3;
+}
+.offset-button.hidden-choice a,
+.offset-button.hidden-choice a.external {
+    background: none;
+    color: transparent;
+}
+.offset-button.hidden-choice a:hover,
+.offset-button.hidden-choice a.external:hover {
+    text-shadow: 0 0 0 #333;
+}
