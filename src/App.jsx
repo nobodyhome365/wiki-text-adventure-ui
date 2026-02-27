@@ -32,6 +32,7 @@ export default function App() {
   const [panelWidth, setPanelWidth] = useState(300);
   const isDirtyRef = useRef(false);
   const lastSavedFilenameRef = useRef(null);
+  const reactFlowInstanceRef = useRef(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -94,10 +95,21 @@ export default function App() {
   const handleAddNode = useCallback(() => {
     isDirtyRef.current = true;
     const newId = String(nextIdRef.current++);
+    const jitter = (range) => (Math.random() - 0.5) * range;
+    const sel = selectedNodeId ? nodes.find(n => n.id === selectedNodeId) : null;
+    let position;
+    if (sel) {
+      position = { x: sel.position.x + 280, y: sel.position.y + jitter(120) };
+    } else {
+      const { x: vpX, y: vpY, zoom } = reactFlowInstanceRef.current?.getViewport() ?? { x: 0, y: 0, zoom: 1 };
+      const centerX = (-vpX + window.innerWidth / 2) / zoom;
+      const centerY = (-vpY + window.innerHeight / 2) / zoom;
+      position = { x: centerX + jitter(100), y: centerY + jitter(100) };
+    }
     setNodes(nds => [...nds, {
       id: newId,
       type: 'sceneNode',
-      position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+      position,
       data: {
         numericId: parseInt(newId, 10),
         image: '',
@@ -109,7 +121,7 @@ export default function App() {
         isGoodEnding: false,
       },
     }]);
-  }, [setNodes]);
+  }, [nodes, selectedNodeId, setNodes]);
 
   const handleUpdateNode = useCallback((nodeId, newData) => {
     isDirtyRef.current = true;
@@ -269,6 +281,7 @@ export default function App() {
             onPaneClick={handlePaneClick}
             onNodesDelete={handleNodesDelete}
             nodeTypes={nodeTypes}
+            onInit={(instance) => { reactFlowInstanceRef.current = instance; }}
             fitView
             deleteKeyCode="Delete"
             colorMode={theme}
@@ -276,6 +289,7 @@ export default function App() {
             <Background />
             <Controls />
             <MiniMap
+              pannable
               nodeColor={node => {
                 if (node.data.numericId === 0) return 'gold';
                 if (node.data.isEnding && node.data.isGoodEnding) return '#27ae60';
