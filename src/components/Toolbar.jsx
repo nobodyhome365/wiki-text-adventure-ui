@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Save, FolderOpen, Settings, Sun, Moon } from 'lucide-react';
 
-export default function Toolbar({ onAddNode, onAutoLayout, onExport, onSaveJSON, onLoadJSON, onImportWikitext, theme, onSetTheme }) {
+export default function Toolbar({ onAddNode, onAutoLayout, onExport, onSaveJSON, onLoadJSON, onImportWikitext, theme, onSetTheme, filename, onFilenameChange }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef(null);
 
@@ -19,11 +19,12 @@ export default function Toolbar({ onAddNode, onAutoLayout, onExport, onSaveJSON,
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    const loadedFilename = file.name.replace(/\.json$/i, '');
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
         const parsed = JSON.parse(ev.target.result);
-        onLoadJSON(parsed);
+        onLoadJSON(parsed, loadedFilename);
       } catch {
         alert('Invalid JSON file.');
       }
@@ -62,6 +63,24 @@ export default function Toolbar({ onAddNode, onAutoLayout, onExport, onSaveJSON,
       <button onClick={onImportWikitext} style={{ borderColor: 'var(--accent-green-border)', color: 'var(--accent-green)' }}>
         Import Wikitext
       </button>
+      <input
+        type="text"
+        value={filename}
+        onChange={e => onFilenameChange(e.target.value)}
+        spellCheck={false}
+        style={{
+          width: 130,
+          fontSize: '0.85em',
+          padding: '0.35em 0.6em',
+          borderRadius: 6,
+          border: '1px solid var(--border-subtle)',
+          backgroundColor: 'var(--bg-button)',
+          color: 'var(--text-primary)',
+          outline: 'none',
+        }}
+        placeholder="adventure"
+      />
+      <span style={{ fontSize: '0.8em', color: 'var(--text-muted)', marginLeft: -4 }}>.json</span>
       <button className="btn" onClick={onSaveJSON}><Save size={14} strokeWidth={2} /> Save JSON</button>
 
       <label

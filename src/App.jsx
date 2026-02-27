@@ -24,15 +24,33 @@ const nodeTypes = { sceneNode: SceneNode };
 
 export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') ?? 'dark');
+  const [filename, setFilename] = useState(() => localStorage.getItem('filename') ?? 'adventure');
   const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [panelWidth, setPanelWidth] = useState(300);
+  const isDirtyRef = useRef(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem('filename', filename);
+  }, [filename]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (isDirtyRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, []);
+
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [wikitextContent, setWikitextContent] = useState('');
   const [importWikitextOpen, setImportWikitextOpen] = useState(false);
@@ -48,8 +66,21 @@ export default function App() {
     setSelectedNodeId(null);
   }, []);
 
+  const handleNodesChange = useCallback((changes) => {
+    if (changes.some(c => c.type !== 'select' && c.type !== 'dimensions')) {
+      isDirtyRef.current = true;
+    }
+    onNodesChange(changes);
+  }, [onNodesChange]);
+
+  const handleEdgesChange = useCallback((changes) => {
+    if (changes.some(c => c.type !== 'select')) isDirtyRef.current = true;
+    onEdgesChange(changes);
+  }, [onEdgesChange]);
+
   const handleConnect = useCallback((connection) => {
     if (connection.source === connection.target) return;
+    isDirtyRef.current = true;
     setEdges(eds => {
       const filtered = eds.filter(
         e => !(e.source === connection.source && e.sourceHandle === connection.sourceHandle)
@@ -59,6 +90,7 @@ export default function App() {
   }, [setEdges]);
 
   const handleAddNode = useCallback(() => {
+    isDirtyRef.current = true;
     const newId = String(nextIdRef.current++);
     setNodes(nds => [...nds, {
       id: newId,
@@ -78,10 +110,12 @@ export default function App() {
   }, [setNodes]);
 
   const handleUpdateNode = useCallback((nodeId, newData) => {
+    isDirtyRef.current = true;
     setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: newData } : n));
   }, [setNodes]);
 
   const handleAddChoice = useCallback((nodeId) => {
+    isDirtyRef.current = true;
     setNodes(nds => nds.map(n => {
       if (n.id !== nodeId) return n;
       return { ...n, data: { ...n.data, choices: [...n.data.choices, { text: '' }] } };
@@ -89,6 +123,7 @@ export default function App() {
   }, [setNodes]);
 
   const handleDeleteChoice = useCallback((nodeId, choiceIndex) => {
+    isDirtyRef.current = true;
     // Remove the edge for this choice and renumber edges for subsequent choices
     setEdges(eds => eds
       .filter(e => !(e.source === nodeId && e.sourceHandle === `choice-${choiceIndex}`))
@@ -112,6 +147,7 @@ export default function App() {
   }, [setEdges, setNodes]);
 
   const handleNodesDelete = useCallback((deletedNodes) => {
+    isDirtyRef.current = true;
     const deletedIds = new Set(deletedNodes.map(n => n.id));
     setEdges(eds => eds.filter(e => !deletedIds.has(e.source) && !deletedIds.has(e.target)));
     if (deletedIds.has(selectedNodeId)) {
@@ -121,12 +157,14 @@ export default function App() {
 
   const handleDeleteNode = useCallback((nodeId) => {
     if (nodeId === '0') return;
+    isDirtyRef.current = true;
     setNodes(nds => nds.filter(n => n.id !== nodeId));
     setEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId));
     setSelectedNodeId(null);
   }, [setNodes, setEdges]);
 
   const handleAutoLayout = useCallback(() => {
+    isDirtyRef.current = true;
     setNodes(nds => runAutoLayout(nds, edges));
   }, [edges, setNodes]);
 
@@ -140,10 +178,11 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'adventure.json';
+    a.download = `${filename}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [nodes, edges]);
+    isDirtyRef.current = false;
+  }, [nodes, edges, filename]);
 
   const handleLoadWikitext = useCallback(({ nodes: newNodes, edges: newEdges }) => {
     setNodes(newNodes);
@@ -151,9 +190,10 @@ export default function App() {
     setSelectedNodeId(null);
     nextIdRef.current = getInitialNextId(newNodes);
     setImportWikitextOpen(false);
+    isDirtyRef.current = false;
   }, [setNodes, setEdges]);
 
-  const handleLoadJSON = useCallback((parsed) => {
+  const handleLoadJSON = useCallback((parsed, loadedFilename) => {
     if (!parsed.nodes || !parsed.edges) {
       alert('Invalid adventure JSON: missing nodes or edges.');
       return;
@@ -162,6 +202,8 @@ export default function App() {
     setEdges(parsed.edges);
     setSelectedNodeId(null);
     nextIdRef.current = getInitialNextId(parsed.nodes);
+    if (loadedFilename) setFilename(loadedFilename);
+    isDirtyRef.current = false;
   }, [setNodes, setEdges]);
 
   return (
@@ -175,6 +217,8 @@ export default function App() {
         onImportWikitext={() => setImportWikitextOpen(true)}
         theme={theme}
         onSetTheme={setTheme}
+        filename={filename}
+        onFilenameChange={setFilename}
       />
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -182,8 +226,8 @@ export default function App() {
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
+            onNodesChange={handleNodesChange}
+            onEdgesChange={handleEdgesChange}
             onConnect={handleConnect}
             onNodeClick={handleNodeClick}
             onPaneClick={handlePaneClick}
