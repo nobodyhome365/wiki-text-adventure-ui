@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import {
   ReactFlow,
   useNodesState,
@@ -23,10 +23,16 @@ import { runAutoLayout } from './utils/autoLayout';
 const nodeTypes = { sceneNode: SceneNode };
 
 export default function App() {
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') ?? 'dark');
   const [nodes, setNodes, onNodesChange] = useNodesState(defaultNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(defaultEdges);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [panelWidth, setPanelWidth] = useState(300);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [wikitextContent, setWikitextContent] = useState('');
   const [importWikitextOpen, setImportWikitextOpen] = useState(false);
@@ -165,6 +171,8 @@ export default function App() {
         onSaveJSON={handleSaveJSON}
         onLoadJSON={handleLoadJSON}
         onImportWikitext={() => setImportWikitextOpen(true)}
+        theme={theme}
+        onSetTheme={setTheme}
       />
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -181,7 +189,7 @@ export default function App() {
             nodeTypes={nodeTypes}
             fitView
             deleteKeyCode="Delete"
-            colorMode="dark"
+            colorMode={theme}
           >
             <Background />
             <Controls />

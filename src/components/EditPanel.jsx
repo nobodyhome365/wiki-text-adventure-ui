@@ -47,8 +47,8 @@ export default function EditPanel({
       style={{
         width: panelWidth,
         height: '100%',
-        backgroundColor: '#161616',
-        borderLeft: '1px solid #2e2e2e',
+        backgroundColor: 'var(--bg-primary)',
+        borderLeft: '1px solid var(--border-color)',
         padding: '12px 14px',
         overflowY: 'auto',
         boxSizing: 'border-box',
@@ -64,13 +64,14 @@ export default function EditPanel({
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <span style={{ fontWeight: 'bold', fontSize: 14 }}>Scene #{numericId}</span>
-        <button onClick={onClose} style={{ padding: '2px 8px', fontSize: 12 }}>✕</button>
+        <button className="btn-sm" onClick={onClose}>✕</button>
       </div>
       {numericId !== 0 && (
         <div style={{ marginBottom: 12 }}>
           <button
+            className="btn-sm btn-danger"
             onClick={() => onDeleteNode(id)}
-            style={{ fontSize: 11, padding: '2px 8px', color: '#c0392b', borderColor: '#5a2020', width: '100%' }}
+            style={{ width: '100%' }}
           >
             Delete Scene
           </button>
@@ -104,9 +105,9 @@ export default function EditPanel({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, marginBottom: 3 }}>
         <label style={{ margin: 0 }}>Scene text</label>
         <button
+          className="btn-sm"
           title="Edit in fullscreen"
           onClick={() => { setDraftText(text || ''); setSceneModalOpen(true); }}
-          style={{ padding: '1px 6px', fontSize: 11 }}
         >
           ↗
         </button>
@@ -120,32 +121,30 @@ export default function EditPanel({
         placeholder="Describe this scene..."
       />
 
-      <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div className="checkbox-row" style={{ marginTop: 14 }}>
         <input
           type="checkbox"
           id="isEnding"
           className="nodrag nopan"
           checked={!!isEnding}
           onChange={e => patch('isEnding', e.target.checked)}
-          style={{ width: 'auto', cursor: 'pointer' }}
         />
-        <label htmlFor="isEnding" style={{ margin: 0, cursor: 'pointer', color: '#aaa', fontSize: '0.85em' }}>
+        <label htmlFor="isEnding" className="checkbox-label">
           Ending node
         </label>
       </div>
 
       {isEnding && (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+          <div className="checkbox-row" style={{ marginTop: 8 }}>
             <input
               type="checkbox"
               id="isGoodEnding"
               className="nodrag nopan"
               checked={!!isGoodEnding}
               onChange={e => patch('isGoodEnding', e.target.checked)}
-              style={{ width: 'auto', cursor: 'pointer' }}
             />
-            <label htmlFor="isGoodEnding" style={{ margin: 0, cursor: 'pointer', color: '#aaa', fontSize: '0.85em' }}>
+            <label htmlFor="isGoodEnding" className="checkbox-label">
               Good ending
             </label>
           </div>
@@ -161,20 +160,20 @@ export default function EditPanel({
 
       <div style={{ marginTop: 14, marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: 13, fontWeight: 'bold' }}>Choices</span>
-        <button onClick={() => onAddChoice(id)} style={{ fontSize: 11, padding: '2px 8px' }}>
+        <button className="btn-sm" onClick={() => onAddChoice(id)}>
           + Add Choice
         </button>
       </div>
 
       {choices.length === 0 && (
-        <div style={{ fontSize: 11, color: '#555', marginBottom: 8 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-disabled)', marginBottom: 8 }}>
           No choices — this is a leaf node. Add a choice and drag its handle to connect it to another scene.
         </div>
       )}
 
       {choices.map((choice, idx) => (
         <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-          <span style={{ color: '#646cff', fontSize: 11, minWidth: 16 }}>{idx + 1}.</span>
+          <span style={{ color: 'var(--accent-blue)', fontSize: 11, minWidth: 16 }}>{idx + 1}.</span>
           <input
             className="nodrag nopan"
             value={choice.text}
@@ -183,8 +182,9 @@ export default function EditPanel({
             style={{ flex: 1 }}
           />
           <button
+            className="btn-sm btn-danger"
             onClick={() => onDeleteChoice(id, idx)}
-            style={{ padding: '2px 6px', fontSize: 12, flexShrink: 0, borderColor: '#5a2020', color: '#c0392b' }}
+            style={{ flexShrink: 0 }}
           >
             ✕
           </button>
@@ -196,12 +196,12 @@ export default function EditPanel({
           style={{
             marginTop: 6,
             padding: '5px 8px',
-            backgroundColor: '#1e1e1e',
-            border: '1px solid #2e2e2e',
-            borderLeft: '2px solid #666',
+            backgroundColor: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            borderLeft: '2px solid var(--text-faint)',
             borderRadius: 4,
             fontSize: 11,
-            color: '#777',
+            color: 'var(--text-faint)',
             fontStyle: 'italic',
           }}
         >
@@ -209,7 +209,7 @@ export default function EditPanel({
         </div>
       )}
 
-      <div style={{ marginTop: 8, fontSize: 10, color: '#555', lineHeight: 1.5 }}>
+      <div style={{ marginTop: 8, fontSize: 10, color: 'var(--text-disabled)', lineHeight: 1.5 }}>
         Drag a choice handle (right side of node) to another node to connect it.
       </div>
 
