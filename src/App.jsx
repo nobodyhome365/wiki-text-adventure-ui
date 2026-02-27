@@ -7,6 +7,7 @@ import {
   Background,
   Controls,
   MiniMap,
+  Panel,
 } from '@xyflow/react';
 import '@xyflow/react/dist/base.css';
 
@@ -95,6 +96,7 @@ export default function App() {
 
   useEffect(() => {
     const handler = (e) => {
+      if (e.key === 'Escape') { setSelectedNodeId(null); return; }
       if (!(e.ctrlKey || e.metaKey)) return;
       if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
       if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); handleRedo(); }
@@ -294,8 +296,16 @@ export default function App() {
     lastSavedFilenameRef.current = filename;
   }, [nodes, edges, filename]);
 
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleSaveJSON(); }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [handleSaveJSON]);
+
   const handleLoadWikitext = useCallback(({ nodes: newNodes, edges: newEdges }) => {
-    setNodes(newNodes);
+    setNodes(newNodes.map(n => n.id === '0' ? { ...n, deletable: false } : n));
     setEdges(newEdges);
     setSelectedNodeId(null);
     nextIdRef.current = getInitialNextId(newNodes);
@@ -309,7 +319,7 @@ export default function App() {
       alert('Invalid adventure JSON: missing nodes or edges.');
       return;
     }
-    setNodes(parsed.nodes);
+    setNodes(parsed.nodes.map(n => n.id === '0' ? { ...n, deletable: false } : n));
     setEdges(parsed.edges);
     setSelectedNodeId(null);
     nextIdRef.current = getInitialNextId(parsed.nodes);
@@ -364,6 +374,7 @@ export default function App() {
             <Controls />
             <MiniMap
               pannable
+              style={{ bottom: 30 }}
               nodeColor={node => {
                 if (node.data.numericId === 0) return 'gold';
                 if (node.data.isEnding && node.data.isGoodEnding) return '#27ae60';
@@ -371,6 +382,14 @@ export default function App() {
                 return '#555';
               }}
             />
+            <Panel
+              position="bottom-right"
+              style={{ bottom: 8, right: 10, pointerEvents: 'none' }}
+            >
+              <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>
+                {nodes.length} scene{nodes.length !== 1 ? 's' : ''}
+              </span>
+            </Panel>
           </ReactFlow>
         </div>
 

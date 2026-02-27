@@ -178,6 +178,33 @@ export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSa
                 <Sun size={12} /> Light
               </button>
             </div>
+
+            <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '10px -12px', paddingTop: 10, paddingLeft: 12, paddingRight: 12 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 6, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                Shortcuts
+              </div>
+              {[
+                ['Ctrl+Z', 'Undo'],
+                ['Ctrl+Y', 'Redo'],
+                ['Ctrl+S', 'Save JSON'],
+                ['Del', 'Delete scene'],
+                ['Esc', 'Deselect'],
+              ].map(([key, label]) => (
+                <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                  <kbd style={{
+                    fontSize: 10,
+                    padding: '1px 5px',
+                    borderRadius: 3,
+                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: 'var(--bg-button)',
+                    color: 'var(--text-muted)',
+                    fontFamily: 'monospace',
+                    whiteSpace: 'nowrap',
+                  }}>{key}</kbd>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 10 }}>{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

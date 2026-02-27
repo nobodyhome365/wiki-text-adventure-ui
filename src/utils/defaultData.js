@@ -2,6 +2,7 @@ export const defaultNodes = [
   {
     id: '0',
     type: 'sceneNode',
+    deletable: false,
     position: { x: 0, y: 130 },
     data: {
       numericId: 0,
@@ -63,7 +64,7 @@ export const defaultNodes = [
       choices: [],
       isEnding: true,
       isGoodEnding: true,
-      startOverText: "'''Play again?'''",
+      startOverText: "'''PLAY AGAIN?'''",
     },
   },
 ];
@@ -96,6 +97,7 @@ export const blankNodes = [
   {
     id: '0',
     type: 'sceneNode',
+    deletable: false,
     position: { x: 250, y: 200 },
     data: {
       numericId: 0,
