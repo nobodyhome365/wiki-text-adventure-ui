@@ -34,6 +34,14 @@ export default function App() {
   const lastSavedFilenameRef = useRef(null);
   const reactFlowInstanceRef = useRef(null);
 
+  // Undo / redo
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  const undoStackRef = useRef([]);
+  const redoStackRef = useRef([]);
+  const updateDebounceRef = useRef(null);
+  const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
@@ -53,6 +61,47 @@ export default function App() {
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, []);
+
+  // Keep refs in sync so pushUndo always snapshots the latest state
+  useEffect(() => { nodesRef.current = nodes; }, [nodes]);
+  useEffect(() => { edgesRef.current = edges; }, [edges]);
+
+  const pushUndo = useCallback(() => {
+    undoStackRef.current.push({ nodes: nodesRef.current, edges: edgesRef.current });
+    if (undoStackRef.current.length > 50) undoStackRef.current.shift();
+    redoStackRef.current = [];
+    setHistoryState({ canUndo: true, canRedo: false });
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    if (!undoStackRef.current.length) return;
+    redoStackRef.current.push({ nodes: nodesRef.current, edges: edgesRef.current });
+    const snap = undoStackRef.current.pop();
+    setNodes(snap.nodes);
+    setEdges(snap.edges);
+    setSelectedNodeId(null);
+    setHistoryState({ canUndo: undoStackRef.current.length > 0, canRedo: true });
+  }, [setNodes, setEdges]);
+
+  const handleRedo = useCallback(() => {
+    if (!redoStackRef.current.length) return;
+    undoStackRef.current.push({ nodes: nodesRef.current, edges: edgesRef.current });
+    const snap = redoStackRef.current.pop();
+    setNodes(snap.nodes);
+    setEdges(snap.edges);
+    setSelectedNodeId(null);
+    setHistoryState({ canUndo: true, canRedo: redoStackRef.current.length > 0 });
+  }, [setNodes, setEdges]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
+      if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); handleRedo(); }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [handleUndo, handleRedo]);
 
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [wikitextContent, setWikitextContent] = useState('');
@@ -83,6 +132,7 @@ export default function App() {
 
   const handleConnect = useCallback((connection) => {
     if (connection.source === connection.target) return;
+    pushUndo();
     isDirtyRef.current = true;
     setEdges(eds => {
       const filtered = eds.filter(
@@ -90,9 +140,10 @@ export default function App() {
       );
       return addEdge(connection, filtered);
     });
-  }, [setEdges]);
+  }, [setEdges, pushUndo]);
 
   const handleAddNode = useCallback(() => {
+    pushUndo();
     isDirtyRef.current = true;
     const newId = String(nextIdRef.current++);
     const jitter = (range) => (Math.random() - 0.5) * range;
@@ -121,22 +172,27 @@ export default function App() {
         isGoodEnding: false,
       },
     }]);
-  }, [nodes, selectedNodeId, setNodes]);
+  }, [nodes, selectedNodeId, setNodes, pushUndo]);
 
   const handleUpdateNode = useCallback((nodeId, newData) => {
     isDirtyRef.current = true;
+    if (!updateDebounceRef.current) pushUndo();
+    clearTimeout(updateDebounceRef.current);
+    updateDebounceRef.current = setTimeout(() => { updateDebounceRef.current = null; }, 1500);
     setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: newData } : n));
-  }, [setNodes]);
+  }, [setNodes, pushUndo]);
 
   const handleAddChoice = useCallback((nodeId) => {
+    pushUndo();
     isDirtyRef.current = true;
     setNodes(nds => nds.map(n => {
       if (n.id !== nodeId) return n;
       return { ...n, data: { ...n.data, choices: [...n.data.choices, { text: '' }] } };
     }));
-  }, [setNodes]);
+  }, [setNodes, pushUndo]);
 
   const handleDeleteChoice = useCallback((nodeId, choiceIndex) => {
+    pushUndo();
     isDirtyRef.current = true;
     // Remove the edge for this choice and renumber edges for subsequent choices
     setEdges(eds => eds
@@ -158,24 +214,32 @@ export default function App() {
       if (n.id !== nodeId) return n;
       return { ...n, data: { ...n.data, choices: n.data.choices.filter((_, i) => i !== choiceIndex) } };
     }));
-  }, [setEdges, setNodes]);
+  }, [setEdges, setNodes, pushUndo]);
 
   const handleNodesDelete = useCallback((deletedNodes) => {
+    pushUndo();
     isDirtyRef.current = true;
     const deletedIds = new Set(deletedNodes.map(n => n.id));
     setEdges(eds => eds.filter(e => !deletedIds.has(e.source) && !deletedIds.has(e.target)));
     if (deletedIds.has(selectedNodeId)) {
       setSelectedNodeId(null);
     }
-  }, [setEdges, selectedNodeId]);
+  }, [setEdges, selectedNodeId, pushUndo]);
 
   const handleDeleteNode = useCallback((nodeId) => {
     if (nodeId === '0') return;
+    pushUndo();
     isDirtyRef.current = true;
     setNodes(nds => nds.filter(n => n.id !== nodeId));
     setEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId));
     setSelectedNodeId(null);
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, pushUndo]);
+
+  const clearHistory = useCallback(() => {
+    undoStackRef.current = [];
+    redoStackRef.current = [];
+    setHistoryState({ canUndo: false, canRedo: false });
+  }, []);
 
   const handleNew = useCallback(() => {
     if (!window.confirm('Start a new project? Any unsaved changes will be lost.')) return;
@@ -186,11 +250,13 @@ export default function App() {
     setFilename('adventure');
     isDirtyRef.current = false;
     lastSavedFilenameRef.current = null;
-  }, [setNodes, setEdges]);
+    clearHistory();
+  }, [setNodes, setEdges, clearHistory]);
 
   const handleDuplicateNode = useCallback((nodeId) => {
     const source = nodes.find(n => n.id === nodeId);
     if (!source) return;
+    pushUndo();
     isDirtyRef.current = true;
     const newId = String(nextIdRef.current++);
     setNodes(nds => [...nds, {
@@ -200,12 +266,13 @@ export default function App() {
       position: { x: source.position.x + 40, y: source.position.y + 40 },
       data: { ...source.data, numericId: parseInt(newId, 10) },
     }]);
-  }, [nodes, setNodes]);
+  }, [nodes, setNodes, pushUndo]);
 
   const handleAutoLayout = useCallback(() => {
+    pushUndo();
     isDirtyRef.current = true;
     setNodes(nds => runAutoLayout(nds, edges));
-  }, [edges, setNodes]);
+  }, [edges, setNodes, pushUndo]);
 
   const handleExport = useCallback(() => {
     setWikitextContent(exportWikitext(nodes, edges));
@@ -234,7 +301,8 @@ export default function App() {
     nextIdRef.current = getInitialNextId(newNodes);
     setImportWikitextOpen(false);
     isDirtyRef.current = false;
-  }, [setNodes, setEdges]);
+    clearHistory();
+  }, [setNodes, setEdges, clearHistory]);
 
   const handleLoadJSON = useCallback((parsed, loadedFilename) => {
     if (!parsed.nodes || !parsed.edges) {
@@ -250,7 +318,8 @@ export default function App() {
       lastSavedFilenameRef.current = loadedFilename;
     }
     isDirtyRef.current = false;
-  }, [setNodes, setEdges]);
+    clearHistory();
+  }, [setNodes, setEdges, clearHistory]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
@@ -266,6 +335,10 @@ export default function App() {
         onSetTheme={setTheme}
         filename={filename}
         onFilenameChange={setFilename}
+        canUndo={historyState.canUndo}
+        canRedo={historyState.canRedo}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
       />
 
       <NodeActionsContext.Provider value={{ onDeleteNode: handleDeleteNode, onDuplicateNode: handleDuplicateNode }}>
@@ -280,6 +353,7 @@ export default function App() {
             onNodeClick={handleNodeClick}
             onPaneClick={handlePaneClick}
             onNodesDelete={handleNodesDelete}
+            onNodeDragStart={pushUndo}
             nodeTypes={nodeTypes}
             onInit={(instance) => { reactFlowInstanceRef.current = instance; }}
             fitView

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Save, FolderOpen, Settings, Sun, Moon } from 'lucide-react';
+import { Save, FolderOpen, Settings, Sun, Moon, Undo2, Redo2 } from 'lucide-react';
 
-export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSaveJSON, onLoadJSON, onImportWikitext, theme, onSetTheme, filename, onFilenameChange }) {
+export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSaveJSON, onLoadJSON, onImportWikitext, theme, onSetTheme, filename, onFilenameChange, canUndo, canRedo, onUndo, onRedo }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef(null);
 
@@ -55,6 +55,15 @@ export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSa
       <button onClick={onNew} style={{ color: '#e74c3c', borderColor: '#e74c3c' }}>New Project</button>
       <button onClick={onAddNode}>+ Add Scene</button>
       <button onClick={onAutoLayout}>Auto Layout</button>
+
+      <div className="toolbar-divider" />
+
+      <button onClick={onUndo} disabled={!canUndo} title="Undo (Ctrl+Z)" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <Undo2 size={14} strokeWidth={2} /> Undo
+      </button>
+      <button onClick={onRedo} disabled={!canRedo} title="Redo (Ctrl+Y)" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <Redo2 size={14} strokeWidth={2} /> Redo
+      </button>
 
       <div className="toolbar-divider" />
 
