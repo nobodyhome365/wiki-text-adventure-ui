@@ -4,7 +4,7 @@ Allows you to construct text adventures in an intuitive, UI flowchart, and expor
 
 ## What You'll Need
 
-You must be in a MediaWiki wiki of some sort. It also needs the following:
+To get the wikitext to actually work, you must be in a MediaWiki wiki of some sort. It also needs the following:
 
 - [Extension:DPLForum](https://www.mediawiki.org/wiki/Extension:DPLforum)
 - `Template:Text adventure`

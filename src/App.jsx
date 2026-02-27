@@ -71,6 +71,8 @@ export default function App() {
         text: '',
         imagesize: '',
         choices: [],
+        isEnding: false,
+        isGoodEnding: false,
       },
     }]);
   }, [setNodes]);

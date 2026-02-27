@@ -13,6 +13,8 @@ export const defaultNodes = [
         { text: 'Go left.' },
         { text: 'Go right.' },
       ],
+      isEnding: false,
+      isGoodEnding: false,
     },
   },
   {
@@ -28,6 +30,8 @@ export const defaultNodes = [
       choices: [
         { text: 'Open the chest.' },
       ],
+      isEnding: false,
+      isGoodEnding: false,
     },
   },
   {
@@ -42,6 +46,7 @@ export const defaultNodes = [
       imagesize: '',
       choices: [],
       isEnding: true,
+      isGoodEnding: false,
       startOverText: "'''START OVER'''",
     },
   },
@@ -57,6 +62,7 @@ export const defaultNodes = [
       imagesize: '',
       choices: [],
       isEnding: true,
+      isGoodEnding: true,
       startOverText: "'''Play again?'''",
     },
   },
