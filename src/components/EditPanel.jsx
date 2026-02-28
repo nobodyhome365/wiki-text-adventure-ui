@@ -138,11 +138,10 @@ export default function EditPanel({
           checked={!!isEnding}
           onChange={e => {
             const val = e.target.checked;
-            if (val && !startOverText) {
-              onUpdateNode(id, { ...data, isEnding: val, startOverText: isGoodEnding ? "'''PLAY AGAIN?'''" : "'''START OVER'''" });
-            } else {
-              patch('isEnding', val);
-            }
+            const updates = { isEnding: val };
+            if (val && !startOverText) updates.startOverText = isGoodEnding ? "'''PLAY AGAIN?'''" : "'''START OVER'''";
+            if (val && !title) updates.title = 'Game Over!';
+            onUpdateNode(id, { ...data, ...updates });
           }}
         />
         <label htmlFor="isEnding" className="checkbox-label">
@@ -166,7 +165,13 @@ export default function EditPanel({
                 } else if (!val && startOverText === "'''PLAY AGAIN?'''") {
                   newStartOverText = "'''START OVER'''";
                 }
-                onUpdateNode(id, { ...data, isGoodEnding: val, startOverText: newStartOverText });
+                let newTitle = title;
+                if (val && (!title || title === 'Game Over!')) {
+                  newTitle = 'You Have Won!';
+                } else if (!val && title === 'You Have Won!') {
+                  newTitle = 'Game Over!';
+                }
+                onUpdateNode(id, { ...data, isGoodEnding: val, startOverText: newStartOverText, title: newTitle });
               }}
             />
             <label htmlFor="isGoodEnding" className="checkbox-label">

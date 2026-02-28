@@ -42,7 +42,7 @@ export const defaultNodes = [
     data: {
       numericId: 2,
       image: '',
-      title: 'You Have Died',
+      title: 'Game Over!',
       text: 'The right path conceals a hidden pit. You plummet into the darkness below.',
       imagesize: '',
       choices: [],
@@ -58,7 +58,7 @@ export const defaultNodes = [
     data: {
       numericId: 3,
       image: '',
-      title: 'You Won!',
+      title: 'You Have Won!',
       text: 'Inside the chest you find a king\'s ransom in gold coins, a jeweled crown, and a one-way portal back to civilization. You are rich beyond imagination.',
       imagesize: '',
       choices: [],
