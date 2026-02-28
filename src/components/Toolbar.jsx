@@ -136,7 +136,6 @@ export default function Toolbar({
             <MenuButton icon={FolderOpen} onClick={() => { fileInputRef.current?.click(); setFileOpen(false); }}>
               Load JSON
             </MenuButton>
-            <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileChange} style={{ display: 'none' }} />
           </div>
         )}
       </div>
@@ -171,6 +170,8 @@ export default function Toolbar({
       <button onClick={onRedo} disabled={!canRedo} title="Redo (Ctrl+Y)" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
         <Redo2 size={14} strokeWidth={2} /> Redo
       </button>
+
+      <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileChange} style={{ display: 'none' }} />
 
       {/* Push filename + settings to far right */}
       <div style={{ flex: 1 }} />
