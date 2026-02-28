@@ -35,6 +35,8 @@ export default function App() {
   const isDirtyRef = useRef(false);
   const fileHandleRef = useRef(null);   // FileSystemFileHandle when File System Access API is available
   const reactFlowInstanceRef = useRef(null);
+  const [saveFlash, setSaveFlash] = useState(false);
+  const saveFlashTimerRef = useRef(null);
 
   const { pushUndo, debouncedPushUndo, handleUndo, handleRedo, clearHistory, historyState } = useHistory(
     nodes, edges, setNodes, setEdges, setSelectedNodeId
@@ -239,10 +241,22 @@ export default function App() {
     setExportModalOpen(true);
   }, [nodes, edges]);
 
+  const flashSaved = useCallback(() => {
+    clearTimeout(saveFlashTimerRef.current);
+    setSaveFlash(true);
+    saveFlashTimerRef.current = setTimeout(() => setSaveFlash(false), 2000);
+    isDirtyRef.current = false;
+  }, []);
+
   const handleSaveJSON = useCallback(async () => {
     const content = JSON.stringify({ nodes, edges }, null, 2);
     if (window.showSaveFilePicker) {
       try {
+        // If the filename was changed since last save, start fresh with a new picker
+        if (fileHandleRef.current) {
+          const savedName = fileHandleRef.current.name.replace(/\.json$/i, '');
+          if (savedName !== filename) fileHandleRef.current = null;
+        }
         if (!fileHandleRef.current) {
           fileHandleRef.current = await window.showSaveFilePicker({
             suggestedName: `${filename}.json`,
@@ -253,7 +267,7 @@ export default function App() {
         const writable = await fileHandleRef.current.createWritable();
         await writable.write(content);
         await writable.close();
-        isDirtyRef.current = false;
+        flashSaved();
       } catch (e) {
         if (e.name !== 'AbortError') throw e;
       }
@@ -266,9 +280,9 @@ export default function App() {
       a.download = `${filename}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      isDirtyRef.current = false;
+      flashSaved();
     }
-  }, [nodes, edges, filename]);
+  }, [nodes, edges, filename, flashSaved]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -312,6 +326,7 @@ export default function App() {
         onAutoLayout={handleAutoLayout}
         onExport={handleExport}
         onSaveJSON={handleSaveJSON}
+        saveFlash={saveFlash}
         onLoadJSON={handleLoadJSON}
         onImportWikitext={() => setImportWikitextOpen(true)}
         theme={theme}
