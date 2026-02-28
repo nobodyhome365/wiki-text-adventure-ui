@@ -1,4 +1,5 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
+import { useHistory } from './hooks/useHistory';
 import {
   ReactFlow,
   useNodesState,
@@ -35,13 +36,9 @@ export default function App() {
   const lastSavedFilenameRef = useRef(null);
   const reactFlowInstanceRef = useRef(null);
 
-  // Undo / redo
-  const nodesRef = useRef(nodes);
-  const edgesRef = useRef(edges);
-  const undoStackRef = useRef([]);
-  const redoStackRef = useRef([]);
-  const updateDebounceRef = useRef(null);
-  const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
+  const { pushUndo, debouncedPushUndo, handleUndo, handleRedo, clearHistory, historyState } = useHistory(
+    nodes, edges, setNodes, setEdges, setSelectedNodeId
+  );
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -62,37 +59,6 @@ export default function App() {
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, []);
-
-  // Keep refs in sync so pushUndo always snapshots the latest state
-  useEffect(() => { nodesRef.current = nodes; }, [nodes]);
-  useEffect(() => { edgesRef.current = edges; }, [edges]);
-
-  const pushUndo = useCallback(() => {
-    undoStackRef.current.push({ nodes: nodesRef.current, edges: edgesRef.current });
-    if (undoStackRef.current.length > 50) undoStackRef.current.shift();
-    redoStackRef.current = [];
-    setHistoryState({ canUndo: true, canRedo: false });
-  }, []);
-
-  const handleUndo = useCallback(() => {
-    if (!undoStackRef.current.length) return;
-    redoStackRef.current.push({ nodes: nodesRef.current, edges: edgesRef.current });
-    const snap = undoStackRef.current.pop();
-    setNodes(snap.nodes);
-    setEdges(snap.edges);
-    setSelectedNodeId(null);
-    setHistoryState({ canUndo: undoStackRef.current.length > 0, canRedo: true });
-  }, [setNodes, setEdges]);
-
-  const handleRedo = useCallback(() => {
-    if (!redoStackRef.current.length) return;
-    undoStackRef.current.push({ nodes: nodesRef.current, edges: edgesRef.current });
-    const snap = redoStackRef.current.pop();
-    setNodes(snap.nodes);
-    setEdges(snap.edges);
-    setSelectedNodeId(null);
-    setHistoryState({ canUndo: true, canRedo: redoStackRef.current.length > 0 });
-  }, [setNodes, setEdges]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -178,11 +144,9 @@ export default function App() {
 
   const handleUpdateNode = useCallback((nodeId, newData) => {
     isDirtyRef.current = true;
-    if (!updateDebounceRef.current) pushUndo();
-    clearTimeout(updateDebounceRef.current);
-    updateDebounceRef.current = setTimeout(() => { updateDebounceRef.current = null; }, 1500);
+    debouncedPushUndo();
     setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: newData } : n));
-  }, [setNodes, pushUndo]);
+  }, [setNodes, debouncedPushUndo]);
 
   const handleAddChoice = useCallback((nodeId) => {
     pushUndo();
@@ -236,12 +200,6 @@ export default function App() {
     setEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId));
     setSelectedNodeId(null);
   }, [setNodes, setEdges, pushUndo]);
-
-  const clearHistory = useCallback(() => {
-    undoStackRef.current = [];
-    redoStackRef.current = [];
-    setHistoryState({ canUndo: false, canRedo: false });
-  }, []);
 
   const handleNew = useCallback(() => {
     if (!window.confirm('Start a new project? Any unsaved changes will be lost.')) return;

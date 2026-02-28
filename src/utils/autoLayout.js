@@ -1,7 +1,5 @@
 import dagre from 'dagre';
-
-const NODE_WIDTH = 220;
-const NODE_HEIGHT = 160;
+import { NODE_LAYOUT_WIDTH, NODE_LAYOUT_HEIGHT } from '../constants';
 
 /**
  * Runs dagre top-to-bottom layout on the given nodes and edges.
@@ -20,7 +18,7 @@ export function runAutoLayout(nodes, edges) {
   });
 
   for (const node of nodes) {
-    g.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
+    g.setNode(node.id, { width: NODE_LAYOUT_WIDTH, height: NODE_LAYOUT_HEIGHT });
   }
 
   for (const edge of edges) {
@@ -34,8 +32,8 @@ export function runAutoLayout(nodes, edges) {
     return {
       ...node,
       position: {
-        x: dagreNode.x - NODE_WIDTH / 2,
-        y: dagreNode.y - NODE_HEIGHT / 2,
+        x: dagreNode.x - NODE_LAYOUT_WIDTH / 2,
+        y: dagreNode.y - NODE_LAYOUT_HEIGHT / 2,
       },
     };
   });

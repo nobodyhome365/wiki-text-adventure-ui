@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Handle, Position, useUpdateNodeInternals } from '@xyflow/react';
 import { NodeActionsContext } from '../contexts/NodeActionsContext';
+import { useClickOutside } from '../hooks/useClickOutside';
+import { NODE_LAYOUT_WIDTH } from '../constants';
 
 function getBorderColor(numericId, isEnding, isGoodEnding) {
   if (numericId === 0) return 'gold';
@@ -13,22 +15,11 @@ export default function SceneNode({ id, data, selected }) {
   const updateNodeInternals = useUpdateNodeInternals();
   const { onDeleteNode, onDuplicateNode } = useContext(NodeActionsContext);
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+  const menuRef = useClickOutside(() => setMenuOpen(false));
 
   useEffect(() => {
     updateNodeInternals(id);
   }, [id, data.choices.length, updateNodeInternals]);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen]);
 
   const { numericId, title, image, text, choices, isEnding, isGoodEnding, startOverText } = data;
   const borderColor = getBorderColor(numericId, isEnding, isGoodEnding);
@@ -38,7 +29,7 @@ export default function SceneNode({ id, data, selected }) {
   return (
     <div
       style={{
-        width: 220,
+        width: NODE_LAYOUT_WIDTH,
         border: `2px solid ${borderColor}`,
         borderRadius: 6,
         backgroundColor: selected ? 'var(--bg-elevated)' : 'var(--bg-secondary)',

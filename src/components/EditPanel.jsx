@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PANEL_WIDTH_MIN, PANEL_WIDTH_MAX } from '../constants';
 
 export default function EditPanel({
   selectedNode,
@@ -33,7 +34,7 @@ export default function EditPanel({
     const startWidth = panelWidth;
     const onMove = (mv) => {
       const delta = startX - mv.clientX;
-      onPanelResize(Math.min(700, Math.max(300, startWidth + delta)));
+      onPanelResize(Math.min(PANEL_WIDTH_MAX, Math.max(PANEL_WIDTH_MIN, startWidth + delta)));
     };
     const onUp = () => {
       document.removeEventListener('mousemove', onMove);

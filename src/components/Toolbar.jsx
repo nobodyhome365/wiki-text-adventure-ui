@@ -1,20 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Save, FolderOpen, Settings, Sun, Moon, Undo2, Redo2 } from 'lucide-react';
+import { useClickOutside } from '../hooks/useClickOutside';
 
 export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSaveJSON, onLoadJSON, onImportWikitext, theme, onSetTheme, filename, onFilenameChange, canUndo, canRedo, onUndo, onRedo }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const settingsRef = useRef(null);
-
-  useEffect(() => {
-    if (!settingsOpen) return;
-    const handler = (e) => {
-      if (settingsRef.current && !settingsRef.current.contains(e.target)) {
-        setSettingsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [settingsOpen]);
+  const settingsRef = useClickOutside(() => setSettingsOpen(false));
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
