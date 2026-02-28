@@ -1,10 +1,84 @@
-import { useState } from 'react';
-import { Save, FolderOpen, Settings, Sun, Moon, Undo2, Redo2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Settings, Sun, Moon, Undo2, Redo2, ChevronDown, Save, SaveAll, FolderOpen, FilePlus, Upload, Download } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
 
-export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSaveJSON, onLoadJSON, onImportWikitext, theme, onSetTheme, filename, onFilenameChange, canUndo, canRedo, onUndo, onRedo }) {
+const menuStyle = {
+  position: 'absolute',
+  top: 'calc(100% + 6px)',
+  left: 0,
+  backgroundColor: 'var(--bg-primary)',
+  border: '1px solid var(--border-color)',
+  borderRadius: 6,
+  zIndex: 999,
+  minWidth: 210,
+  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+  overflow: 'hidden',
+};
+
+const menuItemBase = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  width: '100%',
+  padding: '7px 12px',
+  textAlign: 'left',
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  fontSize: 12,
+  color: 'var(--text-primary)',
+  gap: 24,
+  whiteSpace: 'nowrap',
+  borderRadius: 0,
+  transition: 'background-color 0.1s',
+};
+
+const menuDivider = { height: 1, backgroundColor: 'var(--border-subtle)', margin: '0' };
+
+const kbdHint = { fontSize: 10, color: 'var(--text-faint)', fontFamily: 'monospace' };
+
+function MenuButton({ onClick, color, kbd, icon: Icon, children }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        ...menuItemBase,
+        color: color ?? 'var(--text-primary)',
+        backgroundColor: hovered ? 'var(--bg-elevated)' : 'transparent',
+      }}
+    >
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {Icon && <Icon size={13} strokeWidth={2} />}
+        {children}
+      </span>
+      {kbd && <span style={kbdHint}>{kbd}</span>}
+    </button>
+  );
+}
+
+export default function Toolbar({
+  onNew, onAddNode, onAutoLayout,
+  onExport, onImportWikitext,
+  onSaveJSON, onSaveAsJSON, onLoadJSON,
+  theme, onSetTheme,
+  filename, onFilenameChange,
+  canUndo, canRedo, onUndo, onRedo,
+}) {
+  const [fileOpen, setFileOpen] = useState(false);
+  const [wikitextOpen, setWikitextOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const fileRef = useClickOutside(() => setFileOpen(false));
+  const wikitextRef = useClickOutside(() => setWikitextOpen(false));
   const settingsRef = useClickOutside(() => setSettingsOpen(false));
+  const fileInputRef = useRef(null);
+
+  const toggleFile     = () => { setFileOpen(o => !o); setWikitextOpen(false); setSettingsOpen(false); };
+  const toggleWikitext = () => { setWikitextOpen(o => !o); setFileOpen(false); setSettingsOpen(false); };
+  const toggleSettings = () => { setSettingsOpen(o => !o); setFileOpen(false); setWikitextOpen(false); };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -13,8 +87,7 @@ export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSa
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const parsed = JSON.parse(ev.target.result);
-        onLoadJSON(parsed, loadedFilename);
+        onLoadJSON(JSON.parse(ev.target.result), loadedFilename);
       } catch {
         alert('Invalid JSON file.');
       }
@@ -42,7 +115,51 @@ export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSa
 
       <div className="toolbar-divider" />
 
-      <button onClick={onNew} style={{ color: '#e74c3c', borderColor: '#e74c3c' }}>New Project</button>
+      {/* File dropdown */}
+      <div ref={fileRef} style={{ position: 'relative' }}>
+        <button onClick={toggleFile} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          File <ChevronDown size={11} strokeWidth={2} />
+        </button>
+        {fileOpen && (
+          <div style={menuStyle}>
+            <MenuButton icon={FilePlus} color="#e74c3c" onClick={() => { onNew(); setFileOpen(false); }}>
+              New Project
+            </MenuButton>
+            <div style={menuDivider} />
+            <MenuButton icon={Save} kbd="Ctrl+S" onClick={() => { onSaveJSON(); setFileOpen(false); }}>
+              Save
+            </MenuButton>
+            <MenuButton icon={SaveAll} kbd="Ctrl+Shift+S" onClick={() => { onSaveAsJSON(); setFileOpen(false); }}>
+              Save As
+            </MenuButton>
+            <div style={menuDivider} />
+            <MenuButton icon={FolderOpen} onClick={() => { fileInputRef.current?.click(); setFileOpen(false); }}>
+              Load JSON
+            </MenuButton>
+            <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileChange} style={{ display: 'none' }} />
+          </div>
+        )}
+      </div>
+
+      {/* Wikitext dropdown */}
+      <div ref={wikitextRef} style={{ position: 'relative' }}>
+        <button onClick={toggleWikitext} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          Wikitext <ChevronDown size={11} strokeWidth={2} />
+        </button>
+        {wikitextOpen && (
+          <div style={menuStyle}>
+            <MenuButton icon={Upload} onClick={() => { onExport(); setWikitextOpen(false); }}>
+              Export Wikitext
+            </MenuButton>
+            <MenuButton icon={Download} onClick={() => { onImportWikitext(); setWikitextOpen(false); }}>
+              Import Wikitext
+            </MenuButton>
+          </div>
+        )}
+      </div>
+
+      <div className="toolbar-divider" />
+
       <button onClick={onAddNode}>+ Add Scene</button>
       <button onClick={onAutoLayout}>Auto Layout</button>
 
@@ -55,14 +172,9 @@ export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSa
         <Redo2 size={14} strokeWidth={2} /> Redo
       </button>
 
-      <div className="toolbar-divider" />
+      {/* Push filename + settings to far right */}
+      <div style={{ flex: 1 }} />
 
-      <button onClick={onExport} style={{ borderColor: 'var(--accent-green-border)', color: 'var(--accent-green)' }}>
-        Export Wikitext
-      </button>
-      <button onClick={onImportWikitext} style={{ borderColor: 'var(--accent-green-border)', color: 'var(--accent-green)' }}>
-        Import Wikitext
-      </button>
       <input
         type="text"
         value={filename}
@@ -81,34 +193,11 @@ export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSa
         placeholder="adventure"
       />
       <span style={{ fontSize: '0.8em', color: 'var(--text-muted)', marginLeft: -4 }}>.json</span>
-      <button className="btn" onClick={onSaveJSON}><Save size={14} strokeWidth={2} /> Save JSON</button>
-
-      <label
-        className="btn"
-        style={{
-          cursor: 'pointer',
-          borderRadius: 6,
-          border: '1px solid var(--border-subtle)',
-          padding: '0.4em 0.9em',
-          fontSize: '0.85em',
-          fontWeight: 500,
-          backgroundColor: 'var(--bg-button)',
-          color: 'var(--text-primary)',
-          transition: 'border-color 0.2s, background-color 0.2s',
-          userSelect: 'none',
-        }}
-      >
-        <FolderOpen size={14} strokeWidth={2} /> Load JSON
-        <input type="file" accept=".json" onChange={handleFileChange} style={{ display: 'none' }} />
-      </label>
-
-      {/* Push settings to far right */}
-      <div style={{ flex: 1 }} />
 
       {/* Settings gear */}
       <div ref={settingsRef} style={{ position: 'relative' }}>
         <button
-          onClick={() => setSettingsOpen(o => !o)}
+          onClick={toggleSettings}
           title="Settings"
           style={{ padding: '4px 8px', display: 'flex', alignItems: 'center' }}
         >
@@ -127,7 +216,7 @@ export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSa
               borderRadius: 6,
               padding: '10px 12px',
               zIndex: 999,
-              minWidth: 160,
+              minWidth: 180,
               boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
             }}
           >
@@ -174,11 +263,12 @@ export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSa
                 Shortcuts
               </div>
               {[
-                ['Ctrl+Z', 'Undo'],
-                ['Ctrl+Y', 'Redo'],
-                ['Ctrl+S', 'Save JSON'],
-                ['Del', 'Delete scene'],
-                ['Esc', 'Deselect'],
+                ['Ctrl+Z',       'Undo'],
+                ['Ctrl+Y',       'Redo'],
+                ['Ctrl+S',       'Save'],
+                ['Ctrl+Shift+S', 'Save As'],
+                ['Del',          'Delete scene'],
+                ['Esc',          'Deselect'],
               ].map(([key, label]) => (
                 <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
                   <kbd style={{

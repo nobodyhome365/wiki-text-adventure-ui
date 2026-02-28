@@ -13,6 +13,7 @@ import {
 import '@xyflow/react/dist/base.css';
 
 import SceneNode from './components/SceneNode';
+import SceneEdge from './components/SceneEdge';
 import EditPanel from './components/EditPanel';
 import Toolbar from './components/Toolbar';
 import ExportModal from './components/ExportModal';
@@ -24,6 +25,7 @@ import { NodeActionsContext } from './contexts/NodeActionsContext';
 
 // Must be defined outside the component to avoid re-creating on every render
 const nodeTypes = { sceneNode: SceneNode };
+const edgeTypes = { default: SceneEdge };
 
 export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') ?? 'dark');
@@ -284,13 +286,20 @@ export default function App() {
     }
   }, [nodes, edges, filename, flashSaved]);
 
+  const handleSaveAsJSON = useCallback(async () => {
+    fileHandleRef.current = null;
+    await handleSaveJSON();
+  }, [handleSaveJSON]);
+
   useEffect(() => {
     const handler = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleSaveJSON(); }
+      if (!(e.ctrlKey || e.metaKey) || e.key !== 's') return;
+      e.preventDefault();
+      if (e.shiftKey) { handleSaveAsJSON(); } else { handleSaveJSON(); }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [handleSaveJSON]);
+  }, [handleSaveJSON, handleSaveAsJSON]);
 
   const handleLoadWikitext = useCallback(({ nodes: newNodes, edges: newEdges }) => {
     setNodes(newNodes.map(n => n.id === '0' ? { ...n, deletable: false } : n));
@@ -326,6 +335,7 @@ export default function App() {
         onAutoLayout={handleAutoLayout}
         onExport={handleExport}
         onSaveJSON={handleSaveJSON}
+        onSaveAsJSON={handleSaveAsJSON}
         onLoadJSON={handleLoadJSON}
         onImportWikitext={() => setImportWikitextOpen(true)}
         theme={theme}
@@ -352,6 +362,7 @@ export default function App() {
             onNodesDelete={handleNodesDelete}
             onNodeDragStart={pushUndo}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             onInit={(instance) => { reactFlowInstanceRef.current = instance; }}
             fitView
             deleteKeyCode="Delete"
