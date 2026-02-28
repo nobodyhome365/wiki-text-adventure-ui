@@ -141,6 +141,7 @@ export default function EditPanel({
             const updates = { isEnding: val };
             if (val && !startOverText) updates.startOverText = isGoodEnding ? "'''PLAY AGAIN?'''" : "'''START OVER'''";
             if (val && !title) updates.title = 'Game Over!';
+            if (!val && (title === 'Game Over!' || title === 'You Have Won!')) updates.title = '';
             onUpdateNode(id, { ...data, ...updates });
           }}
         />
