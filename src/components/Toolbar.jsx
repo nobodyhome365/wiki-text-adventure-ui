@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Save, FolderOpen, Settings, Sun, Moon, Undo2, Redo2 } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
 
-export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSaveJSON, saveFlash, onLoadJSON, onImportWikitext, theme, onSetTheme, filename, onFilenameChange, canUndo, canRedo, onUndo, onRedo }) {
+export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSaveJSON, onLoadJSON, onImportWikitext, theme, onSetTheme, filename, onFilenameChange, canUndo, canRedo, onUndo, onRedo }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useClickOutside(() => setSettingsOpen(false));
 
@@ -82,7 +82,6 @@ export default function Toolbar({ onNew, onAddNode, onAutoLayout, onExport, onSa
       />
       <span style={{ fontSize: '0.8em', color: 'var(--text-muted)', marginLeft: -4 }}>.json</span>
       <button className="btn" onClick={onSaveJSON}><Save size={14} strokeWidth={2} /> Save JSON</button>
-      {saveFlash && <span style={{ fontSize: '0.8em', color: 'var(--accent-green)', whiteSpace: 'nowrap' }}>✓ Saved</span>}
 
       <label
         className="btn"

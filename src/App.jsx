@@ -326,7 +326,6 @@ export default function App() {
         onAutoLayout={handleAutoLayout}
         onExport={handleExport}
         onSaveJSON={handleSaveJSON}
-        saveFlash={saveFlash}
         onLoadJSON={handleLoadJSON}
         onImportWikitext={() => setImportWikitextOpen(true)}
         theme={theme}
@@ -409,6 +408,27 @@ export default function App() {
           onImport={handleLoadWikitext}
           onClose={() => setImportWikitextOpen(false)}
         />
+      )}
+
+      {saveFlash && (
+        <div style={{
+          position: 'fixed',
+          bottom: 24,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'var(--bg-primary)',
+          border: '1px solid var(--accent-green-border)',
+          color: 'var(--accent-green)',
+          padding: '8px 18px',
+          borderRadius: 8,
+          fontSize: 13,
+          fontWeight: 500,
+          boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
+          pointerEvents: 'none',
+          zIndex: 9999,
+        }}>
+          ✓ Saved
+        </div>
       )}
     </div>
   );
