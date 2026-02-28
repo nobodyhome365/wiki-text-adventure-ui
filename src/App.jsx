@@ -33,7 +33,7 @@ export default function App() {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [panelWidth, setPanelWidth] = useState(300);
   const isDirtyRef = useRef(false);
-  const lastSavedFilenameRef = useRef(null);
+  const fileHandleRef = useRef(null);   // FileSystemFileHandle when File System Access API is available
   const reactFlowInstanceRef = useRef(null);
 
   const { pushUndo, debouncedPushUndo, handleUndo, handleRedo, clearHistory, historyState } = useHistory(
@@ -209,7 +209,7 @@ export default function App() {
     nextIdRef.current = getInitialNextId(blankNodes);
     setFilename('adventure');
     isDirtyRef.current = false;
-    lastSavedFilenameRef.current = null;
+    fileHandleRef.current = null;
     clearHistory();
   }, [setNodes, setEdges, clearHistory]);
 
@@ -239,19 +239,35 @@ export default function App() {
     setExportModalOpen(true);
   }, [nodes, edges]);
 
-  const handleSaveJSON = useCallback(() => {
-    if (lastSavedFilenameRef.current === filename) {
-      if (!window.confirm(`Overwrite ${filename}.json?`)) return;
+  const handleSaveJSON = useCallback(async () => {
+    const content = JSON.stringify({ nodes, edges }, null, 2);
+    if (window.showSaveFilePicker) {
+      try {
+        if (!fileHandleRef.current) {
+          fileHandleRef.current = await window.showSaveFilePicker({
+            suggestedName: `${filename}.json`,
+            types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }],
+          });
+          setFilename(fileHandleRef.current.name.replace(/\.json$/i, ''));
+        }
+        const writable = await fileHandleRef.current.createWritable();
+        await writable.write(content);
+        await writable.close();
+        isDirtyRef.current = false;
+      } catch (e) {
+        if (e.name !== 'AbortError') throw e;
+      }
+    } else {
+      // Fallback for Firefox / Safari
+      const blob = new Blob([content], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      isDirtyRef.current = false;
     }
-    const blob = new Blob([JSON.stringify({ nodes, edges }, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${filename}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    isDirtyRef.current = false;
-    lastSavedFilenameRef.current = filename;
   }, [nodes, edges, filename]);
 
   useEffect(() => {
@@ -269,6 +285,7 @@ export default function App() {
     nextIdRef.current = getInitialNextId(newNodes);
     setImportWikitextOpen(false);
     isDirtyRef.current = false;
+    fileHandleRef.current = null;
     clearHistory();
   }, [setNodes, setEdges, clearHistory]);
 
@@ -281,10 +298,8 @@ export default function App() {
     setEdges(parsed.edges);
     setSelectedNodeId(null);
     nextIdRef.current = getInitialNextId(parsed.nodes);
-    if (loadedFilename) {
-      setFilename(loadedFilename);
-      lastSavedFilenameRef.current = loadedFilename;
-    }
+    if (loadedFilename) setFilename(loadedFilename);
+    fileHandleRef.current = null;
     isDirtyRef.current = false;
     clearHistory();
   }, [setNodes, setEdges, clearHistory]);
