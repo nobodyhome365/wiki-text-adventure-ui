@@ -1,53 +1,21 @@
 import { useState, useRef } from 'react';
-import { Settings, Sun, Moon, Undo2, Redo2, ChevronDown, Save, SaveAll, FolderOpen, FilePlus, Upload, Download } from 'lucide-react';
+import { Settings, Sun, Moon, Undo2, Redo2, ChevronDown, Save, SaveAll, FolderOpen, FilePlus, Upload, Download, Pencil } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
-
-const menuStyle = {
-  position: 'absolute',
-  top: 'calc(100% + 6px)',
-  left: 0,
-  backgroundColor: 'var(--bg-primary)',
-  border: '1px solid var(--border-color)',
-  borderRadius: 6,
-  zIndex: 999,
-  minWidth: 210,
-  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-  overflow: 'hidden',
-};
-
-const menuItemBase = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  width: '100%',
-  padding: '7px 12px',
-  textAlign: 'left',
-  background: 'none',
-  border: 'none',
-  cursor: 'pointer',
-  fontSize: 12,
-  color: 'var(--text-primary)',
-  gap: 24,
-  whiteSpace: 'nowrap',
-  borderRadius: 0,
-  transition: 'background-color 0.1s',
-};
-
-const menuDivider = { height: 1, backgroundColor: 'var(--border-subtle)', margin: '0' };
 
 const kbdHint = { fontSize: 10, color: 'var(--text-faint)', fontFamily: 'monospace' };
 
 function MenuButton({ onClick, color, kbd, icon: Icon, children }) {
-  const [hovered, setHovered] = useState(false);
   return (
     <button
+      className="menu-item"
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
-        ...menuItemBase,
-        color: color ?? 'var(--text-primary)',
-        backgroundColor: hovered ? 'var(--bg-elevated)' : 'transparent',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 24,
+        whiteSpace: 'nowrap',
+        color: color ?? undefined,
       }}
     >
       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -71,10 +39,13 @@ export default function Toolbar({
   const [wikitextOpen, setWikitextOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  const [filenameEditing, setFilenameEditing] = useState(false);
+
   const fileRef = useClickOutside(() => setFileOpen(false));
   const wikitextRef = useClickOutside(() => setWikitextOpen(false));
   const settingsRef = useClickOutside(() => setSettingsOpen(false));
   const fileInputRef = useRef(null);
+  const filenameInputRef = useRef(null);
 
   const toggleFile     = () => { setFileOpen(o => !o); setWikitextOpen(false); setSettingsOpen(false); };
   const toggleWikitext = () => { setWikitextOpen(o => !o); setFileOpen(false); setSettingsOpen(false); };
@@ -121,18 +92,18 @@ export default function Toolbar({
           File <ChevronDown size={11} strokeWidth={2} />
         </button>
         {fileOpen && (
-          <div style={menuStyle}>
+          <div className="menu-dropdown">
             <MenuButton icon={FilePlus} color="#e74c3c" onClick={() => { onNew(); setFileOpen(false); }}>
               New Project
             </MenuButton>
-            <div style={menuDivider} />
+            <div className="menu-divider" />
             <MenuButton icon={Save} kbd="Ctrl+S" onClick={() => { onSaveJSON(); setFileOpen(false); }}>
               Save
             </MenuButton>
-            <MenuButton icon={SaveAll} kbd="Ctrl+Shift+S" onClick={() => { onSaveAsJSON(); setFileOpen(false); }}>
+            <MenuButton icon={SaveAll} onClick={() => { onSaveAsJSON(); setFileOpen(false); }}>
               Save As
             </MenuButton>
-            <div style={menuDivider} />
+            <div className="menu-divider" />
             <MenuButton icon={FolderOpen} onClick={() => { fileInputRef.current?.click(); setFileOpen(false); }}>
               Load JSON
             </MenuButton>
@@ -146,7 +117,7 @@ export default function Toolbar({
           Wikitext <ChevronDown size={11} strokeWidth={2} />
         </button>
         {wikitextOpen && (
-          <div style={menuStyle}>
+          <div className="menu-dropdown">
             <MenuButton icon={Upload} onClick={() => { onExport(); setWikitextOpen(false); }}>
               Export Wikitext
             </MenuButton>
@@ -176,24 +147,36 @@ export default function Toolbar({
       {/* Push filename + settings to far right */}
       <div style={{ flex: 1 }} />
 
-      <input
-        type="text"
-        value={filename}
-        onChange={e => onFilenameChange(e.target.value)}
-        spellCheck={false}
-        style={{
-          width: 130,
-          fontSize: '0.85em',
-          padding: '0.35em 0.6em',
-          borderRadius: 6,
-          border: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-button)',
-          color: 'var(--text-primary)',
-          outline: 'none',
-        }}
-        placeholder="adventure"
-      />
-      <span style={{ fontSize: '0.8em', color: 'var(--text-muted)', marginLeft: -4 }}>.json</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+        <button
+          onClick={() => { setFilenameEditing(true); setTimeout(() => filenameInputRef.current?.select(), 0); }}
+          title="Rename file"
+          style={{ padding: '2px 4px', display: 'flex', alignItems: 'center', border: 'none', background: 'none', color: 'var(--text-faint)' }}
+        >
+          <Pencil size={11} strokeWidth={2} />
+        </button>
+        {filenameEditing ? (
+          <input
+            ref={filenameInputRef}
+            type="text"
+            value={filename}
+            onChange={e => onFilenameChange(e.target.value)}
+            onBlur={() => setFilenameEditing(false)}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') setFilenameEditing(false); }}
+            spellCheck={false}
+            style={{ width: 110, fontSize: '0.85em', padding: '0.2em 0.4em' }}
+            placeholder="adventure"
+          />
+        ) : (
+          <span
+            style={{ fontSize: '0.85em', color: 'var(--text-primary)', cursor: 'default' }}
+            onDoubleClick={() => { setFilenameEditing(true); setTimeout(() => filenameInputRef.current?.select(), 0); }}
+          >
+            {filename || 'adventure'}
+          </span>
+        )}
+        <span style={{ fontSize: '0.85em', color: 'var(--text-muted)' }}>.json</span>
+      </div>
 
       {/* Settings gear */}
       <div ref={settingsRef} style={{ position: 'relative' }}>
@@ -207,56 +190,35 @@ export default function Toolbar({
 
         {settingsOpen && (
           <div
-            className="nodrag nopan"
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 6px)',
-              right: 0,
-              backgroundColor: 'var(--bg-primary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 6,
-              padding: '10px 12px',
-              zIndex: 999,
-              minWidth: 180,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            }}
+            className="menu-dropdown nodrag nopan"
+            style={{ right: 0, left: 'auto', minWidth: 180, padding: '10px 12px' }}
           >
             <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 8, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
               Appearance
             </div>
             <div style={{ display: 'flex', gap: 4 }}>
-              <button
-                onClick={() => onSetTheme('dark')}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 5,
-                  fontSize: 12,
-                  backgroundColor: theme === 'dark' ? 'var(--accent-blue)' : 'var(--bg-button)',
-                  color: theme === 'dark' ? '#fff' : 'var(--text-primary)',
-                  borderColor: theme === 'dark' ? 'var(--accent-blue)' : 'var(--border-subtle)',
-                }}
-              >
-                <Moon size={12} /> Dark
-              </button>
-              <button
-                onClick={() => onSetTheme('light')}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 5,
-                  fontSize: 12,
-                  backgroundColor: theme === 'light' ? 'var(--accent-blue)' : 'var(--bg-button)',
-                  color: theme === 'light' ? '#fff' : 'var(--text-primary)',
-                  borderColor: theme === 'light' ? 'var(--accent-blue)' : 'var(--border-subtle)',
-                }}
-              >
-                <Sun size={12} /> Light
-              </button>
+              {[['dark', Moon, 'Dark'], ['light', Sun, 'Light']].map(([value, Icon, label]) => {
+                const active = theme === value;
+                return (
+                  <button
+                    key={value}
+                    onClick={() => onSetTheme(value)}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 5,
+                      fontSize: 12,
+                      backgroundColor: active ? 'var(--accent-blue)' : 'var(--bg-button)',
+                      color: active ? '#fff' : 'var(--text-primary)',
+                      borderColor: active ? 'var(--accent-blue)' : 'var(--border-subtle)',
+                    }}
+                  >
+                    <Icon size={12} /> {label}
+                  </button>
+                );
+              })}
             </div>
 
             <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '10px -12px', paddingTop: 10, paddingLeft: 12, paddingRight: 12 }}>
@@ -264,12 +226,11 @@ export default function Toolbar({
                 Shortcuts
               </div>
               {[
-                ['Ctrl+Z',       'Undo'],
-                ['Ctrl+Y',       'Redo'],
-                ['Ctrl+S',       'Save'],
-                ['Ctrl+Shift+S', 'Save As'],
-                ['Del',          'Delete scene'],
-                ['Esc',          'Deselect'],
+                ['Ctrl+Z', 'Undo'],
+                ['Ctrl+Y', 'Redo'],
+                ['Ctrl+S', 'Save'],
+                ['Del',    'Delete scene'],
+                ['Esc',    'Deselect'],
               ].map(([key, label]) => (
                 <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
                   <kbd style={{

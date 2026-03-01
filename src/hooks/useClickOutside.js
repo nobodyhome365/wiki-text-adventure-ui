@@ -13,8 +13,8 @@ export function useClickOutside(handler) {
     const listener = (e) => {
       if (ref.current && !ref.current.contains(e.target)) handlerRef.current();
     };
-    document.addEventListener('mousedown', listener);
-    return () => document.removeEventListener('mousedown', listener);
+    document.addEventListener('mousedown', listener, true);
+    return () => document.removeEventListener('mousedown', listener, true);
   }, []);
 
   return ref;

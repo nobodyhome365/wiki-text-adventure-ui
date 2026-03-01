@@ -2,14 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { Handle, Position, useUpdateNodeInternals } from '@xyflow/react';
 import { NodeActionsContext } from '../contexts/NodeActionsContext';
 import { useClickOutside } from '../hooks/useClickOutside';
-import { NODE_LAYOUT_WIDTH } from '../constants';
-
-function getBorderColor(numericId, isEnding, isGoodEnding) {
-  if (numericId === 0) return 'gold';
-  if (isEnding && isGoodEnding) return '#27ae60';
-  if (isEnding) return '#c0392b';
-  return '#555';
-}
+import { NODE_LAYOUT_WIDTH, getNodeColor } from '../constants';
 
 export default function SceneNode({ id, data, selected }) {
   const updateNodeInternals = useUpdateNodeInternals();
@@ -22,7 +15,7 @@ export default function SceneNode({ id, data, selected }) {
   }, [id, data.choices.length, updateNodeInternals]);
 
   const { numericId, title, image, text, choices, isEnding, isGoodEnding, startOverText } = data;
-  const borderColor = getBorderColor(numericId, isEnding, isGoodEnding);
+  const borderColor = getNodeColor(numericId, isEnding, isGoodEnding);
 
   const truncatedText = text && text.length > 80 ? text.slice(0, 80) + '…' : text;
 
@@ -71,49 +64,17 @@ export default function SceneNode({ id, data, selected }) {
               ⋮
             </button>
             {menuOpen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 2px)',
-                  right: 0,
-                  backgroundColor: 'var(--bg-primary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 6,
-                  zIndex: 999,
-                  minWidth: 120,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                  overflow: 'hidden',
-                }}
-              >
+              <div className="menu-dropdown" style={{ top: 'calc(100% + 2px)', right: 0, left: 'auto', minWidth: 120 }}>
                 <button
+                  className="menu-item"
                   onClick={e => { e.stopPropagation(); onDuplicateNode(id); setMenuOpen(false); }}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    padding: '7px 12px',
-                    textAlign: 'left',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 12,
-                    color: 'var(--text-primary)',
-                  }}
                 >
                   Duplicate
                 </button>
                 <button
+                  className="menu-item"
                   onClick={e => { e.stopPropagation(); onDeleteNode(id); setMenuOpen(false); }}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    padding: '7px 12px',
-                    textAlign: 'left',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 12,
-                    color: '#e74c3c',
-                  }}
+                  style={{ color: '#e74c3c' }}
                 >
                   Delete
                 </button>

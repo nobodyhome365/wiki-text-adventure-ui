@@ -21,6 +21,7 @@ import ImportWikitextModal from './components/ImportWikitextModal';
 import { defaultNodes, defaultEdges, blankNodes, blankEdges, getInitialNextId } from './utils/defaultData';
 import { exportWikitext } from './utils/wikitextExporter';
 import { runAutoLayout } from './utils/autoLayout';
+import { getNodeColor } from './constants';
 import { NodeActionsContext } from './contexts/NodeActionsContext';
 
 // Must be defined outside the component to avoid re-creating on every render
@@ -68,11 +69,12 @@ export default function App() {
     const handler = (e) => {
       if (e.key === 'Escape') { setSelectedNodeId(null); return; }
       if (!(e.ctrlKey || e.metaKey)) return;
-      if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
-      if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); handleRedo(); }
+      const k = e.key.toLowerCase();
+      if (k === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
+      if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); handleRedo(); }
     };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
+    document.addEventListener('keydown', handler, true);
+    return () => document.removeEventListener('keydown', handler, true);
   }, [handleUndo, handleRedo]);
 
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -293,39 +295,38 @@ export default function App() {
 
   useEffect(() => {
     const handler = (e) => {
-      if (!(e.ctrlKey || e.metaKey) || e.key !== 's') return;
+      if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== 's') return;
       e.preventDefault();
-      if (e.shiftKey) { handleSaveAsJSON(); } else { handleSaveJSON(); }
+      handleSaveJSON();
     };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [handleSaveJSON, handleSaveAsJSON]);
+    document.addEventListener('keydown', handler, true);
+    return () => document.removeEventListener('keydown', handler, true);
+  }, [handleSaveJSON]);
 
-  const handleLoadWikitext = useCallback(({ nodes: newNodes, edges: newEdges }) => {
+  const resetWithData = useCallback((newNodes, newEdges) => {
     setNodes(newNodes.map(n => n.id === '0' ? { ...n, deletable: false } : n));
     setEdges(newEdges);
     setSelectedNodeId(null);
     nextIdRef.current = getInitialNextId(newNodes);
-    setImportWikitextOpen(false);
-    isDirtyRef.current = false;
     fileHandleRef.current = null;
+    isDirtyRef.current = false;
     clearHistory();
+    setTimeout(() => reactFlowInstanceRef.current?.fitView({ padding: 0.1 }), 0);
   }, [setNodes, setEdges, clearHistory]);
+
+  const handleLoadWikitext = useCallback(({ nodes: newNodes, edges: newEdges }) => {
+    resetWithData(newNodes, newEdges);
+    setImportWikitextOpen(false);
+  }, [resetWithData]);
 
   const handleLoadJSON = useCallback((parsed, loadedFilename) => {
     if (!parsed.nodes || !parsed.edges) {
       alert('Invalid adventure JSON: missing nodes or edges.');
       return;
     }
-    setNodes(parsed.nodes.map(n => n.id === '0' ? { ...n, deletable: false } : n));
-    setEdges(parsed.edges);
-    setSelectedNodeId(null);
-    nextIdRef.current = getInitialNextId(parsed.nodes);
+    resetWithData(parsed.nodes, parsed.edges);
     if (loadedFilename) setFilename(loadedFilename);
-    fileHandleRef.current = null;
-    isDirtyRef.current = false;
-    clearHistory();
-  }, [setNodes, setEdges, clearHistory]);
+  }, [resetWithData]);
 
   const displayedEdges = useMemo(() =>
     edges.map(e =>
@@ -383,12 +384,7 @@ export default function App() {
             <MiniMap
               pannable
               style={{ bottom: 30 }}
-              nodeColor={node => {
-                if (node.data.numericId === 0) return 'gold';
-                if (node.data.isEnding && node.data.isGoodEnding) return '#27ae60';
-                if (node.data.isEnding) return '#c0392b';
-                return '#555';
-              }}
+              nodeColor={node => getNodeColor(node.data.numericId, node.data.isEnding, node.data.isGoodEnding)}
             />
             <Panel
               position="bottom-right"
