@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef, useEffect } from 'react';
+import { useCallback, useState, useRef, useEffect, useMemo } from 'react';
 import { useHistory } from './hooks/useHistory';
 import {
   ReactFlow,
@@ -327,6 +327,15 @@ export default function App() {
     clearHistory();
   }, [setNodes, setEdges, clearHistory]);
 
+  const displayedEdges = useMemo(() =>
+    edges.map(e =>
+      e.source === selectedNodeId
+        ? { ...e, selected: true, style: { stroke: 'var(--accent-blue)', strokeWidth: 2 } }
+        : e
+    ),
+    [edges, selectedNodeId]
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
       <Toolbar
@@ -353,7 +362,8 @@ export default function App() {
         <div style={{ flex: 1, position: 'relative' }}>
           <ReactFlow
             nodes={nodes}
-            edges={edges}
+            edges={displayedEdges}
+            elevateEdgesOnSelect
             onNodesChange={handleNodesChange}
             onEdgesChange={handleEdgesChange}
             onConnect={handleConnect}
