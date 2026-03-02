@@ -381,19 +381,19 @@ export default function App() {
           >
             <Background />
             <Controls />
-            <MiniMap
-              pannable
-              style={{ bottom: 30 }}
-              nodeColor={node => getNodeColor(node.data.numericId, node.data.isEnding, node.data.isGoodEnding)}
-            />
             <Panel
               position="bottom-right"
-              style={{ bottom: 8, right: 10, pointerEvents: 'none' }}
+              style={{ bottom: 160, right: 0, pointerEvents: 'none' }}
             >
               <span style={{ fontSize: 10, color: 'var(--text-faint)' }}>
                 {nodes.length} scene{nodes.length !== 1 ? 's' : ''}
               </span>
             </Panel>
+            <MiniMap
+              pannable
+              style={{ bottom: 10 }}
+              nodeColor={node => getNodeColor(node.data.numericId, node.data.isEnding, node.data.isGoodEnding)}
+            />
           </ReactFlow>
         </div>
 
@@ -430,7 +430,7 @@ export default function App() {
       {saveFlash && (
         <div style={{
           position: 'fixed',
-          bottom: 24,
+          top: 60,
           left: '50%',
           transform: 'translateX(-50%)',
           backgroundColor: 'var(--bg-primary)',
