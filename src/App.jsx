@@ -36,6 +36,7 @@ export default function App() {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [panelWidth, setPanelWidth] = useState(300);
   const isDirtyRef = useRef(false);
+  const pendingAutoLayoutRef = useRef(false);
   const fileHandleRef = useRef(null);   // FileSystemFileHandle when File System Access API is available
   const reactFlowInstanceRef = useRef(null);
   const [saveFlash, setSaveFlash] = useState(false);
@@ -97,7 +98,16 @@ export default function App() {
       isDirtyRef.current = true;
     }
     onNodesChange(changes);
-  }, [onNodesChange]);
+    if (pendingAutoLayoutRef.current && changes.some(c => c.type === 'dimensions')) {
+      setNodes(nds => {
+        if (nds.every(n => n.measured)) {
+          pendingAutoLayoutRef.current = false;
+          return runAutoLayout(nds, edges);
+        }
+        return nds;
+      });
+    }
+  }, [onNodesChange, setNodes, edges]);
 
   const handleEdgesChange = useCallback((changes) => {
     if (changes.some(c => c.type !== 'select')) isDirtyRef.current = true;
@@ -315,6 +325,7 @@ export default function App() {
   }, [setNodes, setEdges, clearHistory]);
 
   const handleLoadWikitext = useCallback(({ nodes: newNodes, edges: newEdges }) => {
+    pendingAutoLayoutRef.current = true;
     resetWithData(newNodes, newEdges);
     setImportWikitextOpen(false);
   }, [resetWithData]);
