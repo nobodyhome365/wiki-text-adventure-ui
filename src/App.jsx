@@ -42,8 +42,12 @@ export default function App() {
   const [saveFlash, setSaveFlash] = useState(false);
   const saveFlashTimerRef = useRef(null);
 
+  const onHistoryRestore = useCallback((restoredNodes) => {
+    nextIdRef.current = getInitialNextId(restoredNodes);
+  }, []);
+
   const { pushUndo, debouncedPushUndo, handleUndo, handleRedo, clearHistory, historyState } = useHistory(
-    nodes, edges, setNodes, setEdges, setSelectedNodeId
+    nodes, edges, setNodes, setEdges, setSelectedNodeId, onHistoryRestore
   );
 
   useEffect(() => {

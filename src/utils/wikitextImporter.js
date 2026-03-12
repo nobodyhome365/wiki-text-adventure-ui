@@ -82,7 +82,7 @@ export function importWikitext(wikitext) {
         text: sceneText,
         imagesize,
         choices: regularChoices.map(c => ({ text: c.text })),
-        ...(isEnding && { isEnding: true, startOverText }),
+        ...(isEnding && { isEnding: true, isGoodEnding: /won/i.test(title), startOverText }),
       },
     });
 

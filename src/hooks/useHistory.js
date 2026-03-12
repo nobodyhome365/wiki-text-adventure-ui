@@ -11,7 +11,7 @@ import { UNDO_STACK_MAX, UPDATE_DEBOUNCE_MS } from '../constants';
  * @param {Function} setSelectedNodeId - clears selection on undo/redo
  * @returns {{ pushUndo, debouncedPushUndo, handleUndo, handleRedo, clearHistory, historyState }}
  */
-export function useHistory(nodes, edges, setNodes, setEdges, setSelectedNodeId) {
+export function useHistory(nodes, edges, setNodes, setEdges, setSelectedNodeId, onRestore) {
   const nodesRef = useRef(nodes);
   const edgesRef = useRef(edges);
   const undoStackRef = useRef([]);
@@ -44,8 +44,9 @@ export function useHistory(nodes, edges, setNodes, setEdges, setSelectedNodeId) 
     setNodes(snap.nodes);
     setEdges(snap.edges);
     setSelectedNodeId(null);
+    onRestore?.(snap.nodes);
     setHistoryState({ canUndo: undoStackRef.current.length > 0, canRedo: true });
-  }, [setNodes, setEdges, setSelectedNodeId]);
+  }, [setNodes, setEdges, setSelectedNodeId, onRestore]);
 
   const handleRedo = useCallback(() => {
     if (!redoStackRef.current.length) return;
@@ -54,8 +55,9 @@ export function useHistory(nodes, edges, setNodes, setEdges, setSelectedNodeId) 
     setNodes(snap.nodes);
     setEdges(snap.edges);
     setSelectedNodeId(null);
+    onRestore?.(snap.nodes);
     setHistoryState({ canUndo: true, canRedo: redoStackRef.current.length > 0 });
-  }, [setNodes, setEdges, setSelectedNodeId]);
+  }, [setNodes, setEdges, setSelectedNodeId, onRestore]);
 
   const clearHistory = useCallback(() => {
     undoStackRef.current = [];
